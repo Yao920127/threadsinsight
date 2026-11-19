@@ -8,16 +8,16 @@
 
 ## 線上版
 
-| 網站                 | 網址                                                  | 說明                                               |
-| :------------------- | :---------------------------------------------------- | :------------------------------------------------- |
-| ThreadsInsight       | https://web-production-b6984bbe.up.railway.app        | 註冊一個帳號即可使用（不需驗證信箱）               |
-| 架構圖（Floorplan）  | https://floorplan-production-3c17c79e.up.railway.app  | 互動式系統架構圖：各部分、檔案說明與三條導覽流程   |
+| 網站                | 網址                                                 | 說明                                             |
+| :------------------ | :--------------------------------------------------- | :----------------------------------------------- |
+| ThreadsInsight      | https://web-production-b6984bbe.up.railway.app       | 用 Email 與密碼註冊即可使用（不需驗證信箱）      |
+| 架構圖（Floorplan） | https://floorplan-production-3c17c79e.up.railway.app | 互動式系統架構圖：各部分、檔案說明與三條導覽流程 |
 
 兩個網站都部署在 Railway，並與本 repo 的 `main` 分支同步：推上 GitHub 後，Railway 只重新部署有變動的服務（依各服務的監看路徑），資料庫遷移也會自動套用。部署細節見 [docs/architecture.md](docs/architecture.md)。
 
 ## 功能
 
-- **會員登入**：Email／密碼或 Magic Link（Supabase Auth）。未登入者看不到任何頁面內容，API 一律回 `401`。
+- **會員登入**：Email 與密碼註冊、登入、登出，也能刪除自己的帳號（連同所有分析資料）。未登入者看不到任何頁面內容，API 一律回 `401`。
 - **分析任務**：輸入帳號與篇數（1–50 篇），依序執行生成 → 清理 → 三群組分群 → NLP 歸因 → 統計 → 策略建議。任務可檢視、重新執行、刪除；同帳號同篇數 24 小時內直接載入快取。
 - **報告**：總覽指標、發文時段與星期分布、熱力圖、文字長度與貼文類型的互動比較、高中低互動群組的內容差異、Top 5 貼文、全部貼文明細。
 - **內容策略建議**：規則引擎一定會產出 3 點觀察與改寫範例；有 Anthropic 金鑰時改由 Claude Haiku 5.5 產生（伺服器金鑰，或使用者在網頁輸入自己的金鑰）。
@@ -26,98 +26,75 @@
 
 ## 技術架構
 
-| 層級     | 技術                                                                                     |
-| :------- | :--------------------------------------------------------------------------------------- |
-| 前端     | Vite+（`vp`）、TypeScript、原生 HTML／CSS（無前端框架）、supabase-js                     |
-| 後端     | Python 3.12、FastAPI、jieba（繁體詞典）、Anthropic SDK                                   |
-| 資料庫   | Supabase：Auth、PostgreSQL、Row Level Security；本機以 Supabase CLI 執行                 |
-| LLM      | Claude Haiku 5.5（`claude-haiku-5-5`），結構化輸出，失敗時退回規則引擎                   |
-| 本機部署 | docker compose：nginx（靜態檔、CSP 與安全標頭、轉送 `/api`）＋ FastAPI，皆以非 root 執行 |
+| 層級   | 技術                                                                                          |
+| :----- | :-------------------------------------------------------------------------------------------- |
+| 前端   | Vite+（`vp`）、TypeScript、原生 HTML／CSS（無前端框架）                                       |
+| 後端   | Python 3.12、FastAPI、psycopg 3、jieba（繁體詞典）、Anthropic SDK                             |
+| 資料庫 | PostgreSQL（Railway），業務資料表以 Row Level Security 隔離                                   |
+| 登入   | 自建 Email＋密碼：scrypt 雜湊、httpOnly cookie 保存登入狀態                                   |
+| LLM    | Claude Haiku 5.5（`claude-haiku-5-5`），結構化輸出，失敗時退回規則引擎                        |
+| 部署   | Railway：nginx（靜態檔、CSP 與安全標頭、轉送 `/api`）＋ FastAPI ＋ Postgres，皆與 GitHub 同步 |
 
 ```mermaid
 flowchart LR
-    B[瀏覽器] -- 登入 --> S[(Supabase<br/>Auth + PostgreSQL)]
-    B -- "/api（Bearer token）" --> W[nginx]
+    B[瀏覽器] -- "網頁與 /api（登入 cookie）" --> W[nginx]
     W --> A[FastAPI]
-    A -- 驗證 JWT（JWKS） --> S
-    A -- 以使用者身分讀寫<br/>RLS 生效 --> S
+    A -- "帳號、登入狀態" --> D[(PostgreSQL)]
+    A -- "以受限角色＋使用者 ID 查詢<br/>RLS 生效" --> D
     A -- 選用 --> C[Claude Haiku 5.5]
 ```
 
-後端以「使用者自己的登入憑證」存取資料庫，看得到哪些資料完全由 RLS 決定，後端不持有任何 Supabase 密鑰。完整的決策與取捨見 [docs/architecture.md](docs/architecture.md)。
+後端查詢業務資料時，會先切換成權限受限的資料庫角色並帶上目前使用者的 ID，看得到哪些資料完全由資料庫的 RLS 規則決定；就算查詢漏寫條件，也拿不到別人的資料。完整的決策與取捨見 [docs/architecture.md](docs/architecture.md)。
 
-## 快速開始
+## 開發
 
 ### 需要安裝
 
-- [Docker](https://docs.docker.com/get-docker/)（Supabase CLI 與 docker compose 都需要）
-- [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started)
-- 用開發模式時另外需要：[uv](https://docs.astral.sh/uv/)（Python）、[Vite+](https://viteplus.dev/guide/)（`vp`，會依 `package.json` 自動使用 bun）
+- [uv](https://docs.astral.sh/uv/)（Python）
+- [Vite+](https://viteplus.dev/guide/)（`vp`，會依 `package.json` 自動使用 bun）
+- 選用：[Docker](https://docs.docker.com/get-docker/)（想在本機跑完整網站時）
 
-### 1. 啟動本機 Supabase
-
-```bash
-supabase start -x realtime,storage-api,imgproxy,edge-runtime,logflare,vector,supavisor
-```
-
-`-x` 排除用不到的服務，可以少下載很多映像檔。第一次啟動會自動建立資料表與 RLS 規則（`supabase/migrations/`）。
-
-| 服務                  | 網址                   |
-| :-------------------- | :--------------------- |
-| Studio（資料庫管理）  | http://127.0.0.1:54323 |
-| Mailpit（本機收信箱） | http://127.0.0.1:54324 |
-
-Magic Link 的信會寄到 Mailpit，不會寄到真的信箱。
-
-### 2. 建立設定檔
+### 日常開發
 
 ```bash
-cp .env.example .env
+vp install && uv sync
+cp .env.example .env   # 要用 AI 建議時填入 ANTHROPIC_API_KEY（也可以不填，改在網頁輸入自己的金鑰）
 ```
 
-本機 Supabase 的預設值已經填好，不用修改就能啟動。要用 AI 建議時填入 `ANTHROPIC_API_KEY`（也可以不填，改在網頁上輸入自己的金鑰）。`.env` 已列在 `.gitignore`，請勿提交。
+本機不跑資料庫：日常開發以單元測試為主（資料庫以模擬 RLS 的假實作取代），實際畫面與流程看線上版，或用下方的 docker compose。`.env` 已列在 `.gitignore`，請勿提交。
 
-### 3A. 用 docker compose 啟動（建議）
+### 在本機跑完整網站（選用）
 
 ```bash
 docker compose up --build
 ```
 
-打開 http://localhost:8080 ，註冊一個帳號即可開始使用。停止：`docker compose down`。
-
-### 3B. 用開發模式啟動
-
-```bash
-vp install && uv sync
-vp run api:dev   # 終端機 1：FastAPI，http://127.0.0.1:8000
-vp dev           # 終端機 2：前端，http://localhost:5173（/api 會轉送到 8000）
-```
-
-停止 Supabase：`supabase stop`（資料會保留）。
+會啟動 Postgres、資料庫遷移、API 與網站，打開 http://localhost:8080 註冊一個帳號即可使用。停止：`docker compose down`（加 `-v` 連同資料一起刪除）。
 
 ## 環境變數
 
-| 變數                                                     | 用途                                                                                  |
-| :------------------------------------------------------- | :------------------------------------------------------------------------------------ |
-| `SUPABASE_URL`                                           | 後端連 Supabase 的網址（驗證 JWT、存取資料庫）                                        |
-| `SUPABASE_PUBLISHABLE_KEY`                               | 後端呼叫 PostgREST 用的 publishable key；未設定時改讀 `VITE_SUPABASE_PUBLISHABLE_KEY` |
-| `VITE_SUPABASE_URL`、`VITE_SUPABASE_PUBLISHABLE_KEY`     | 打包進前端，**只能放 publishable key**（`sb_publishable_` 開頭），絕不可放 secret key |
-| `ANTHROPIC_API_KEY`                                      | 選填。伺服器端的 Anthropic 金鑰                                                       |
-| `THREADSINSIGHT_AI`                                      | `auto`（預設，有金鑰才啟用）、`on`、`off`（一律停用，連網頁輸入的金鑰也不用）         |
-| `SUPABASE_JWT_ISSUER`、`DOCKER_SUPABASE_URL`、`WEB_PORT` | 只有 docker compose 會用到，預設值即可（見 `.env.example`）                           |
+| 變數                            | 用途                                                                          |
+| :------------------------------ | :---------------------------------------------------------------------------- |
+| `DATABASE_URL`                  | PostgreSQL 連線字串。Railway 由平台提供；docker compose 會自動設定            |
+| `COOKIE_SECURE`                 | 登入 cookie 是否只在 HTTPS 送出，預設 `true`；本機 http 開發時設 `false`      |
+| `ANTHROPIC_API_KEY`             | 選填。伺服器端的 Anthropic 金鑰                                               |
+| `THREADSINSIGHT_AI`             | `auto`（預設，有金鑰才啟用）、`on`、`off`（一律停用，連網頁輸入的金鑰也不用） |
+| `LOG_FORMAT`                    | `json`（預設，一行一筆）或 `text`                                             |
+| `LOCAL_DB_PASSWORD`、`WEB_PORT` | 只有 docker compose 會用到，預設值即可（見 `.env.example`）                   |
 
 ## 專案結構
 
 ```text
-api/threadsinsightapi/   FastAPI：合成資料生成、清理、分群、NLP、統計、策略、登入驗證、任務管理
-api/tests/               pytest（不連網路：Supabase 與 Anthropic 都以假實作取代）
+api/threadsinsightapi/   FastAPI：合成資料生成、清理、分群、NLP、統計、策略、會員登入、任務管理
+api/tests/               pytest（不連網路、不連資料庫：資料庫與 Anthropic 都以假實作取代）
 src/                     前端：main.ts（分析）、login.ts（登入）、compare.ts（比較）
   api/  auth/  compare/  ui/  export/  analysis/  mock/
-supabase/migrations/     資料表、RLS 規則、Mock Dataset 約束、交易式寫入函式
-supabase/tests/          pgTAP：RLS 隔離與約束測試
+db/migrations/           資料表、RLS 規則、Mock Dataset 約束、交易式寫入函式
+e2e/                     Playwright：對線上版（或 E2E_BASE_URL）跑完整使用流程
 shared/                  前後端共用的合成內容庫與跨語言 golden 檔
-docker/                  Dockerfile 與 nginx 設定（CSP、安全標頭）
-docs/architecture.md     架構決策紀錄（ADR-001）
+docker/                  Dockerfile、資料庫遷移腳本與 nginx 設定（CSP、安全標頭）
+docs/architecture.md     架構決策紀錄（ADR-001、ADR-002）
+docs/floorplan/          架構圖匯出檔（線上架構圖網站的內容）
 threadsinsightapi.md     API 與 Mock Dataset 規格書
 threadsinsight_prd-1.md  產品需求文件
 ```
@@ -129,20 +106,20 @@ vp check          # 前端格式、lint、型別檢查
 vp test           # 前端單元測試
 vp run api:test   # 後端 pytest 與覆蓋率
 uv run ruff check api
-supabase test db  # RLS 與資料庫約束（需先 supabase start）
-vp run e2e        # Playwright E2E（需先 supabase start；會自動啟動 API 與前端）
-vp run e2e:docker # 對 docker compose（http://localhost:8080）跑 E2E，並檢查 CSP 與安全標頭
+vp run e2e        # Playwright E2E，對線上版執行
+vp run e2e:local  # 對本機 docker compose（http://localhost:8080）執行
 vp run build      # 建置三個頁面
 vp run clean      # 清除建置與測試快取（加 --dry-run 只列出不刪除）
 ```
 
-測試不會呼叫付費 API：單元測試以假實作取代 Anthropic client 與資料庫；E2E 測試關閉 AI（`THREADSINSIGHT_AI=off`）。
+單元測試不連資料庫，也不呼叫付費 API：資料庫存取以記憶體版 Repository 模擬 RLS，Anthropic client 以假實作注入。
 
 E2E 測試的注意事項：
 
 - 第一次使用要下載瀏覽器：`vpx playwright install chromium`；或設定 `E2E_BROWSER_CHANNEL=chrome` 改用本機的 Chrome。
-- 每個測試會建立一個 `e2e-…@example.com` 帳號，全部結束後自動刪除（只會刪除本機 Supabase 上的帳號）。
+- 每個測試會建立一個 `e2e-…@example.com` 帳號，結束時透過「刪除自己的帳號」清掉，不留資料。
 - 每個測試都會自動檢查頁面沒有 JavaScript 錯誤與 CSP 違規。失敗時的截圖與 trace 在 `test-results/`，報告在 `playwright-report/`。
+- 線上版沒有設定伺服器端的 AI 金鑰，測試也不輸入金鑰，因此不會產生 AI 費用。
 
 ## 日誌
 
@@ -154,8 +131,9 @@ E2E 測試的注意事項：
 | `task.completed` | 任務 ID、帳號、**生成種子**、篇數、生成／分析／寫入各階段耗時 |
 | `task.failed`    | 失敗的階段、例外類型、已完成階段的耗時                        |
 | `llm.call`       | 模型、狀態（success、timeout、refusal 等）、耗時、token 用量  |
+| `auth.*`         | 註冊、登入、登入失敗、刪除帳號（只記使用者 ID）               |
 
-登入憑證、金鑰、Email 與貼文內文一律不寫入日誌。
+密碼、登入 cookie、金鑰、Email 與貼文內文一律不寫入日誌。
 
 ## 資料來源與限制
 
@@ -188,17 +166,18 @@ E2E 測試的注意事項：
 
 ## 安全設計
 
-- **資料隔離**：四張業務資料表全部啟用 RLS，只允許本人存取，`anon` 角色沒有任何權限；寫入結果使用 `security invoker` 函式，RLS 照常生效。
-- **登入驗證**：後端以 JWKS 驗證 Supabase access token，只接受非對稱演算法（ES256／RS256），並檢查 issuer、audience、到期時間與角色。
-- **金鑰處理**：使用者在網頁輸入的 Anthropic 金鑰只存在該分頁的 `sessionStorage`，以標頭送出，不寫入資料庫、日誌或網址；伺服器金鑰只放在 `.env`，不進映像檔。
-- **網頁防護**：嚴格 CSP（不允許行內腳本、樣式與 `eval`）、`X-Frame-Options: DENY`、`nosniff`、`Referrer-Policy`、`Permissions-Policy`；所有動態文字經過跳脫；CSV 匯出防公式注入；登入後的導向只接受站內路徑。
-- **限流**：建立／重跑任務每位使用者每分鐘 30 次，實際呼叫 AI 每分鐘 10 次。
+- **資料隔離**：三張業務資料表都啟用 RLS。後端每個交易先切換成受限角色 `threadsinsight_app` 並帶上使用者 ID，政策只放行本人的資料；這個角色碰不到帳號與密碼表。寫入結果的資料庫函式以呼叫者身分執行，RLS 照常生效。
+- **登入**：密碼以 scrypt 加鹽雜湊保存；登入狀態放在 `HttpOnly`、`Secure`、`SameSite=Strict` 的 cookie，資料庫只存它的 SHA-256，登出或刪帳號時在伺服器端作廢。登入失敗一律回同一個訊息，不透露帳號是否存在。
+- **跨站請求**：會修改資料的請求若帶著其他網站的 Origin，一律拒絕（403）。
+- **金鑰處理**：使用者在網頁輸入的 Anthropic 金鑰只存在該分頁的 `sessionStorage`，以標頭送出，不寫入資料庫、日誌或網址；伺服器金鑰只放在環境變數，不進映像檔。
+- **網頁防護**：嚴格 CSP（不允許行內腳本、樣式與 `eval`，只能連回自己的網站）、`X-Frame-Options: DENY`、`nosniff`、`Referrer-Policy`、`Permissions-Policy`；所有動態文字經過跳脫；CSV 匯出防公式注入；登入後的導向只接受站內路徑。
+- **限流**：註冊與登入每個 IP 每分鐘 30 次；建立／重跑任務每位使用者每分鐘 30 次，實際呼叫 AI 每分鐘 10 次。
 
 ## 已知限制
 
-- **線上版不寄信**：Railway 上自架的 Supabase 沒有設定寄信服務，因此註冊後直接啟用帳號（不驗證信箱），Magic Link 也無法使用；要開放給外部使用者前，應先設定 SMTP 並恢復信箱驗證。
-- **尚未加上 HSTS**：線上版走 Railway 提供的 HTTPS 網域，HSTS 標頭待確定正式網域後再加上。
+- **不驗證信箱、沒有忘記密碼**：沒有寄信服務，註冊後直接啟用帳號，也無法用 Email 重設密碼；要開放給外部使用者前，應接上寄信服務並補上這兩項功能。
 - **限流在單一程序內**：多台伺服器或重啟後不共用。
+- **尚未加上 HSTS**：線上版走 Railway 提供的 HTTPS 網域，HSTS 標頭待確定正式網域後再加上。
 - **E2E 只測 Chromium**：Firefox、Safari 尚未納入。
 
 ## 相關文件

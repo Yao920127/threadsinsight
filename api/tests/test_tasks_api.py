@@ -1,4 +1,4 @@
-"""任務端點（PRD F2、AC-1、例外情境 7、8）。資料庫以記憶體假實作取代，不連 Supabase。"""
+"""任務端點（PRD F2、AC-1、例外情境 7、8）。資料庫以記憶體假實作取代，不連任何資料庫。"""
 
 from datetime import UTC, datetime, timedelta
 

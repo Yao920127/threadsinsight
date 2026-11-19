@@ -91,17 +91,29 @@ NLP 內容歸因（`api/threadsinsightapi/text_features.py`、`attribution.py`�
 - **回應標頭**：一律 `Cache-Control: no-store`。
 - **保存與限流**：成功結果寫入該任務的 `analysis_summaries.strategy_insights`，之後開啟同一任務直接回傳、不再呼叫；帶 `?refresh=true`（例如換了金鑰）才重新產生。失敗結果不保存。實際呼叫每位登入使用者每分鐘最多 10 次，超過回 `429`。
 
-### 2.3 登入驗證（`api/threadsinsightapi/auth.py`，PRD F1、AC-1）
+### 2.3 會員與登入（`api/threadsinsightapi/auth_api.py`、`auth.py`，PRD F1、AC-1）
 
-- **適用範圍**：`/api/mock-posts` 與 `/api/ai-strategy` 都必須登入；請求帶 `Authorization: Bearer <Supabase access token>`。
-- **驗證方式**：以 `{SUPABASE_URL}/auth/v1/.well-known/jwks.json` 的公鑰驗證簽章（快取 5 分鐘），只接受 `ES256`／`RS256`；同時檢查 `iss = {SUPABASE_URL}/auth/v1`、`aud = authenticated`、`exp`（容許 10 秒時差）、`role = authenticated`，`sub` 必須是 UUID。anon key、service role key 與 HS256 token 一律拒絕。
-- **未登入或憑證無效**：回 `401`，信封 `error` 固定為 `"Authentication required"`，附 `WWW-Authenticate: Bearer` 與 `Cache-Control: no-store`；登入檢查先於參數驗證，未登入者看不到參數錯誤。
-- **驗證服務無法連線**（取不到 JWKS）：回 `503`，`error` 為 `"Authentication service unavailable"`。
-- **隱私**：token 不寫入日誌、不出現在回應中；驗證後保留在請求內，供之後以使用者身分查詢資料庫（RLS）。
+自建 Email＋密碼登入，不依賴外部登入服務（ADR-002）。
+
+| 方法與路徑              | 說明                                                       | 成功回應                          |
+| :---------------------- | :--------------------------------------------------------- | :-------------------------------- |
+| `POST /api/auth/signup` | 本文 `{email, password}`。建立帳號並直接登入（不驗證信箱） | `201`，`{id, email}`，設定 cookie |
+| `POST /api/auth/login`  | 本文 `{email, password}`                                   | `200`，`{id, email}`，設定 cookie |
+| `POST /api/auth/logout` | 作廢目前的登入狀態並清除 cookie；沒登入也回 `200`          | `{signed_out: true}`              |
+| `GET /api/auth/me`      | 目前登入的帳號                                             | `{id, email}`                     |
+| `DELETE /api/auth/me`   | 刪除自己的帳號，任務、貼文、報告與登入狀態連帶刪除         | `{deleted: true}`                 |
+
+- **規則**：Email 正規化為小寫、最長 254 字元；密碼 8–128 字元，以 scrypt（N=2^14、r=8、p=1、16 位元組鹽）雜湊保存。格式不符回 `400`；Email 已註冊回 `409`（`"Email already registered"`）。
+- **登入失敗**：Email 不存在、格式不對或密碼錯誤一律回 `401`、`"Invalid email or password"`；帳號不存在時也做一次同成本的雜湊比對，避免從回應時間判斷帳號是否存在。
+- **登入狀態**：cookie `ti_session`（`HttpOnly`、`Secure`、`SameSite=Strict`、`Path=/`，7 天）內是隨機值，資料庫只存它的 SHA-256；登出、刪帳號即在伺服器端作廢，過期的紀錄在下次登入時清除。本機 http 開發以 `COOKIE_SECURE=false` 關閉 `Secure`。
+- **需要登入的端點**：除了健康檢查與上表的註冊、登入、登出，所有端點都需要登入；沒有或無效的登入狀態回 `401`、`"Authentication required"`，登入檢查先於參數驗證。
+- **跨站請求**：`POST`／`PUT`／`PATCH`／`DELETE` 請求若帶 `Origin` 且與 `Host` 不同，回 `403`、`"Cross-site request rejected"`。
+- **限流**：註冊與登入每個來源 IP 每分鐘最多 30 次，超過回 `429`。
+- **隱私**：密碼、cookie 與 Email 不寫入日誌（只記使用者 ID）。
 
 ### 2.4 分析任務端點（`api/threadsinsightapi/tasks_api.py`，PRD F2）
 
-所有任務端點都以「使用者自己的登入憑證」經 PostgREST 存取資料庫，RLS 決定可見範圍；別人的任務一律視同不存在（`404`）。回傳的任務欄位：`id`、`target_username`、`requested_count`、`status`、`data_source`、`post_count`、`error_message`、`created_at`、`started_at`、`completed_at`（不含 `user_id`）。
+所有任務端點存取資料庫時，交易都先切換成受限角色 `threadsinsight_app` 並帶上目前使用者的 ID，RLS 決定可見範圍；別人的任務一律視同不存在（`404`）。回傳的任務欄位：`id`、`target_username`、`requested_count`、`status`、`data_source`、`post_count`、`error_message`、`created_at`、`started_at`、`completed_at`（不含 `user_id`）。
 
 | 方法與路徑                   | 說明                                                                                                                                          | 成功回應 `data`                 |
 | :--------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------ |
@@ -114,7 +126,7 @@ NLP 內容歸因（`api/threadsinsightapi/text_features.py`、`attribution.py`�
 - **狀態流程**：`pending → generating → analyzing → completed`，每一步都寫回資料庫；管線例外時標為 `failed`（`error_message = "Pipeline failed"`），回 `500`、`error = "Analysis failed"`，`data.task` 為失敗的任務。
 - **卡住的任務**（PRD 例外情境 8）：讀取列表或單一任務時，把停在 `pending`／`generating`／`analyzing` 超過 3 分鐘（依 `started_at`）的任務標為 `failed`（`error_message = "Timed out after 3 minutes"`）。重跑會更新 `started_at`。
 - **報告一致性**：`report` 與 `GET /api/mock-posts` 同格式；從資料庫讀回的報告與當場分析完全相同（`published_at` 一律換回 `+08:00`）。
-- **寫入方式**：結果由資料庫函式 `save_analysis_results`（`security invoker`）在單一交易內寫入 `posts`、`analysis_summaries` 並把任務標為 `completed`。
+- **寫入方式**：結果由資料庫函式 `save_analysis_results`（`security invoker`，以受限角色執行，RLS 照常生效）在單一交易內寫入 `posts`、`analysis_summaries` 並把任務標為 `completed`。
 - **錯誤**：參數不合法 `400`（不建立任務）；資料庫無法連線 `503`、`error = "Database unavailable"`；建立與重跑每位使用者每分鐘最多 30 次，超過 `429`。
 
 ### 2.5 共用回應標頭與健康檢查

@@ -2,33 +2,28 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-ThreadsInsight：輸入 Threads 帳號，以**確定性合成資料（Mock Dataset）**產生貼文並分析互動、NLP 歸因與內容策略。前端 Vite+ / TypeScript（無框架），後端 Python FastAPI，資料與登入用 Supabase（Auth、PostgreSQL、RLS）。產品需求在 `threadsinsight_prd-1.md`，API 與合成資料規格在 `threadsinsightapi.md`，架構決策在 `docs/architecture.md`（ADR-001）。
+ThreadsInsight：輸入 Threads 帳號，以**確定性合成資料（Mock Dataset）**產生貼文並分析互動、NLP 歸因與內容策略。前端 Vite+ / TypeScript（無框架），後端 Python FastAPI，資料庫是 PostgreSQL（RLS），登入為自建 Email＋密碼（ADR-002）。產品需求在 `threadsinsight_prd-1.md`，API 與合成資料規格在 `threadsinsightapi.md`，架構決策在 `docs/architecture.md`（ADR-001、ADR-002）。線上版部署在 Railway（見 README「線上版」）。
 
 ## 指令
 
 前端工具鏈是 Vite+ 的全域 CLI `vp`（不是 Vite 本身，套件管理用 bun）。`vp <name>` 是內建指令，`vp run <name>` 才是 `package.json` 的 script。執行 TS 腳本用 `vpx <file>`，不要加 tsx／ts-node。Vite+ 文件在 `node_modules/vite-plus/docs`。
 
 ```bash
-# 前置：本機 Supabase（-x 排除用不到的服務，否則會下載大量映像檔）
-supabase start -x realtime,storage-api,imgproxy,edge-runtime,logflare,vector,supavisor
-cp .env.example .env              # 本機預設值已填好
-
-# 開發
+# 開發（本機不跑資料庫；需要整套網站時用 docker compose）
 vp install && uv sync
-vp run api:dev                    # FastAPI :8000
+cp .env.example .env
+docker compose up --build         # Postgres + 遷移 + API + 網站，:8080（選用）
+vp run api:dev                    # FastAPI :8000（需要 DATABASE_URL 才能登入與存任務）
 vp dev                            # 前端 :5173，/api 代理到 8000
-docker compose up --build         # 整套部署版 :8080（nginx + api；Supabase 仍在本機）
 
 # 檢查與測試
 vp check                          # 格式 + lint + 型別（DESIGN.md 的格式錯誤是使用者的檔案，刻意不改）
 vp test                           # Vitest；單檔：vp test src/ui/taskList.test.ts；單一測試：vp test -t "名稱"
 vp run api:test                   # pytest + 覆蓋率；單一測試：uv run pytest api/tests/test_tasks_api.py::TestCreate::test_force_bypasses_cache
 uv run ruff check api && uv run ruff format api
-supabase test db                  # pgTAP（supabase/tests/）
-supabase db reset                 # 重新套用 migrations —— 會清空本機資料庫，先問使用者
-vp run e2e                        # Playwright（自動啟動 API 與 vp dev）；E2E_BROWSER_CHANNEL=chrome 用本機 Chrome
+vp run e2e                        # Playwright，對線上版執行；E2E_BROWSER_CHANNEL=chrome 用本機 Chrome
+vp run e2e:local                  # 對本機 docker compose（:8080）執行
 vp exec playwright test -c e2e -g "名稱"   # 單一 E2E 測試
-vp run e2e:docker                 # 對 docker compose 跑，另含 CSP／安全標頭測試
 vp run build                      # tsc + 建置三個頁面
 vp run mock:golden                # 重新產生跨語言 golden 檔（改產生器後）
 ```
@@ -39,10 +34,10 @@ vp run mock:golden                # 重新產生跨語言 golden 檔（改產生
 
 ### 資料流與權限
 
-- 瀏覽器用 supabase-js（PKCE）登入，呼叫 `/api/*` 時帶 `Authorization: Bearer <access token>`。
-- FastAPI（`auth.py`）以 Supabase JWKS 驗證 token：只接受 ES256／RS256，檢查 iss、aud、exp、role。容器內連 Supabase 的網址（`host.docker.internal`）和 token 的 iss 不同，所以有 `SUPABASE_JWT_ISSUER`。
-- 後端存取資料庫一律透過 PostgREST，並帶**使用者自己的 token** 加 publishable key（`task_repository.py`），權限完全由 RLS 決定。後端不持有任何 Supabase 密鑰，也不自行加 `user_id` 條件做授權。別人的任務在 RLS 下等同不存在，一律回 404。
-- 重跑任務時，替換貼文與彙總並標為 completed 由資料庫函式 `save_analysis_results`（`security invoker`）在單一交易內完成，見 `supabase/migrations/`。
+- 登入（`auth_api.py`、`accounts.py`）：Email＋密碼，scrypt 雜湊（`passwords.py`）。登入狀態是 `ti_session` cookie（HttpOnly、Secure、SameSite=Strict），資料庫 `sessions` 只存 SHA-256。`require_user`（`dependencies.py`）從 cookie 查出使用者。前端請求一律 `credentials: "same-origin"`，沒有 Authorization 標頭。
+- 業務資料一律經 `db.user_transaction`：交易一開始 `SET LOCAL ROLE threadsinsight_app` 並以 `set_config('app.user_id', …)` 帶上使用者，**RLS 決定看得到什麼**；不要自行加 `user_id` 條件做授權，也不要用擁有者身分查業務表。`users`、`sessions` 只能經 `db.owner_transaction`（受限角色沒有權限）。別人的任務在 RLS 下等同不存在，一律回 404。
+- 會修改資料的請求帶著不同 Origin 會被 `app.py` 擋下（403）；nginx 以 `$http_host`（含埠號）轉送 Host，比對才正確。
+- 重跑任務時，替換貼文與彙總並標為 completed 由資料庫函式 `save_analysis_results`（`security invoker`）在單一交易內完成，見 `db/migrations/`。遷移由 `docker/migrate.sh` 套用（Railway 的 `migrate` 服務與 docker compose 共用），已套用版本記在 `schema_migrations`；**已部署的遷移檔不能改，要改結構就新增檔案**。
 
 ### 分析管線（`api/threadsinsightapi/`）
 
@@ -67,9 +62,10 @@ vp run mock:golden                # 重新產生跨語言 golden 檔（改產生
 
 ### 測試替身
 
-- `api/tests/conftest.py` 每個測試都會覆寫兩個 FastAPI dependency：`get_key_resolver` 換成本機產生的 EC 金鑰（`auth_support.make_token`），`get_task_repository` 換成模擬 RLS 的 `FakeTaskRepository`（`fake_repository.py`，也模擬 PostgREST 以 UTC 字串、浮點數回傳的格式）。
+- `api/tests/conftest.py` 每個測試都會覆寫兩個 FastAPI dependency：`get_account_store` 換成記憶體版 `FakeAccountStore`（預先有兩個帳號，`auth_support.auth_headers(USER_A／USER_B)` 帶它們的 cookie），`get_task_repository` 換成模擬 RLS 的 `FakeTaskRepository`（`fake_repository.py`，也模擬資料庫以 UTC 字串、浮點數回傳的格式）。`test_db.py` 以假連線池檢查每個交易都切換角色並帶使用者 ID。
+- **單元測試不連資料庫**，SQL 寫錯它抓不到：改了 `db/migrations/` 或 `task_repository.py`／`accounts.py` 的查詢，要用 docker compose 或線上 E2E 實際驗證。
 - Anthropic client 以 `tests_support.fake_success_client` 等假實作注入。測試不連網路，也不呼叫付費 API。
-- E2E（`e2e/`）每個測試以 API 自建 `e2e-…@example.com` 帳號，結束後由 `globalTeardown` 用本機 secret key 刪除（只允許本機網址）。共用 `fixtures.ts` 的 `page` 會自動檢查 JS 錯誤與 CSP 違規。E2E 時 AI 一律關閉。
+- E2E（`e2e/`）預設對線上版執行。每個測試以 API 自建 `e2e-…@example.com` 帳號（`useSession` 把 cookie 放進瀏覽器），結束時呼叫 `DELETE /api/auth/me` 刪除。註冊／登入每 IP 每分鐘 30 次，fixture 遇到 429 會等待重試。共用 `fixtures.ts` 的 `page` 會自動檢查 JS 錯誤與 CSP 違規。線上版不設伺服器 AI 金鑰，E2E 不會產生 AI 費用。
 - Playwright 的字串型 `waitForFunction` 會被 CSP 擋下（需要 eval），請改用 locator 斷言。
 
 ### 日誌
@@ -80,6 +76,6 @@ vp run mock:golden                # 重新產生跨語言 golden 檔（改產生
 
 - **只使用合成資料**：不以登入的工作階段爬取 Threads，不混入真實貼文。
 - **不使用真實帳號名稱**：程式、測試、文件與範例一律用虛構帳號，例如 `demo_user`、`another_demo`。
-- **金鑰處理**：使用者在網頁輸入的 Anthropic 金鑰只存在 `sessionStorage`，以標頭傳送，不寫入資料庫、日誌或網址。`VITE_` 開頭的變數會打包進前端，只能放 `sb_publishable_` 開頭的 publishable key。
+- **金鑰處理**：使用者在網頁輸入的 Anthropic 金鑰只存在 `sessionStorage`，以標頭傳送，不寫入資料庫、日誌或網址。`VITE_` 開頭的變數會打包進前端，不可放任何密鑰。日誌不記密碼、cookie、Email（`log_event` 會丟掉 `password`、`email` 等欄位名）。
 - **jieba 0.42.1**：使用內附的繁體詞典 `api/threadsinsightapi/data/dict.txt.big`。pytest 已濾掉它的 SyntaxWarning；coverage 必須維持 `core = "sysmon"`，否則測試會從約 1 秒變成約 30 秒。
 - **溝通語言**：與使用者溝通、撰寫文件一律用繁體中文（台灣用語）；程式碼、指令與專有名詞維持原文。

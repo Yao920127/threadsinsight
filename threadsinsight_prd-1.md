@@ -3,7 +3,7 @@
 **文件版本**：v1.3（2026-11-19：貼文數範圍改為 1–50 篇〔預設 30〕並定義小樣本行為；新增「全部貼文明細」與響應式（RWD）需求）  
 **前版**：v1.2（2026-11-19：全面統一為 Mock Dataset 合成擬真資料規則，移除多層爬取與備援切換邏輯）  
 **狀態**：待確認（確認範圍、優先級與驗收標準後進入開發）  
-**技術架構**：Vite + TypeScript 前端 + Python FastAPI 後端（合成資料生成器、jieba NLP 分析模組、LLM 建議） + Supabase（Auth / PostgreSQL / RLS） + LLM API（Claude Haiku 5.5，`claude-haiku-5-5`）。開發與第一階段交付以本機 docker-compose 與本機 Supabase CLI 執行，雲端部署平台另行決定（見 `docs/architecture.md` ADR-001）
+**技術架構**：Vite + TypeScript 前端 + Python FastAPI 後端（合成資料生成器、jieba NLP 分析模組、LLM 建議） + PostgreSQL（RLS）與自建 Email／密碼登入 + LLM API（Claude Haiku 5.5，`claude-haiku-5-5`）。部署於 Railway（網站、API、PostgreSQL），與 GitHub 同步（見 `docs/architecture.md` ADR-001、ADR-002）
 
 ---
 
@@ -44,8 +44,8 @@
 
 - **目的**：確保分析任務與數據具備個人工作區隔離，未登入者無法存取儀表板。
 - **觸發條件**：使用者訪問網站首頁、`/login` 或嘗試進入受保護路由（`/dashboard`、`/tasks`、`/compare`）。
-- **輸入資料**：Email、Password（或 Magic Link 驗證信箱）。
-- **處理流程**：透過 Supabase Auth 進行身分驗證；前端 Middleware 檢查 Session Token，未登入者強制重導向至 `/login`。
+- **輸入資料**：Email、Password（不驗證信箱；Magic Link 與忘記密碼待接上寄信服務後再提供）。
+- **處理流程**：後端自建 Email／密碼登入（密碼以 scrypt 雜湊保存，登入狀態存於 httpOnly cookie）；頁面載入時向後端確認登入狀態，未登入者強制重導向至 `/login`。
 - **輸出結果**：建立/驗證使用者 Session，跳轉至個人分析儀表板總覽頁。
 - **使用者可見狀態**：登入表單驗證提示、載入中狀態、登入錯誤訊息、右上角顯示目前登入帳號與登出按鈕。
 
@@ -125,7 +125,7 @@
 flowchart TD
     A[訪問系統首頁] --> B{是否已登入?}
     B -- 否 --> C[導向 /login 登入/註冊頁]
-    C --> D[輸入 Email/Password 或 Magic Link]
+    C --> D[輸入 Email/Password]
     D --> E{驗證成功?}
     E -- 否 --> C
     E -- 是 --> F[進入個人儀表板 /dashboard]
@@ -138,7 +138,7 @@ flowchart TD
     J --> K[Mock Dataset 生成器: 以 username 為種子產出 1–50 篇擬真貼文]
     K --> L[資料清理: 去重/缺值處理/統一UTC+8/萃取特徵]
     L --> M[數據分析: 基礎指標 + 讚/回覆三群組NLP歸因 + LLM建議]
-    M --> N[儲存至 Supabase 並標記 completed & mock_dataset]
+    M --> N[儲存至 PostgreSQL 並標記 completed & mock_dataset]
     N --> I
 
     I --> O[查看報告: 固定Mock提示橫幅 / KPI / 圖表 / Top5 / NLP三群歸因 / 策略建議]
@@ -150,11 +150,11 @@ flowchart TD
 
 ---
 
-## 4. 資料與權限設計（Supabase Schema & RLS）
+## 4. 資料與權限設計（PostgreSQL Schema & RLS）
 
 ### 4.1 資料表設計（ER 關聯與欄位規格）
 
-所有資料表皆建置於 Supabase PostgreSQL，並透過 `user_id` 關聯至 `auth.users`。
+所有資料表皆建置於 PostgreSQL，並透過 `user_id` 關聯至 `users`（帳號表，由後端自行管理，見 ADR-002）。
 
 #### 1. `profiles`（使用者資料表）
 
@@ -232,7 +232,7 @@ flowchart TD
 
 | 例外情境                                   | 偵測方式                                                           | 系統處理與 Retry / 降級行為                                                                                                                    | 使用者可見錯誤/提示訊息                                                                       |
 | :----------------------------------------- | :----------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------- |
-| **1. 登入失敗 / Session 過期**             | Supabase Auth 回傳錯誤或 JWT 無效                                  | 阻擋受保護 API 與頁面存取，清除無效 Cookie 並導向 `/login`。                                                                                   | 「帳號或密碼錯誤，請重新輸入」或「登入階段已過期，請重新登入」。                              |
+| **1. 登入失敗 / Session 過期**             | 登入失敗或登入狀態（cookie）無效                                   | 阻擋受保護 API 與頁面存取，清除無效 Cookie 並導向 `/login`。                                                                                   | 「帳號或密碼錯誤，請重新輸入」或「登入階段已過期，請重新登入」。                              |
 | **2. 輸入帳號格式不合法**                  | 正則驗證失敗（含非法字元、空白或非 Threads 網址格式）              | 阻擋提交並提示正確輸入格式，不建立無效任務。                                                                                                   | 「請輸入有效的 Threads 帳號名稱（如 @demo_user）或網址。」                                    |
 | **3. 貼文數超出範圍或非整數**              | 前端 `min=1`／`max=50` 驗證；API 參數驗證（`count` 非 1–50 整數）  | 前端阻擋提交並標示欄位錯誤；API 回傳 `400` 與錯誤訊息，不建立任務、不自動修正數值。                                                            | 「請輸入 1 到 50 之間的整數。」                                                               |
 | **4. 外部平台限制（爬蟲遭擋 / API 受限）** | 系統預設策略（已於實測階段驗證未登入 GraphQL 回傳 HTTP 401）       | **一律直接採用確定性 Mock Dataset 規則**產出擬真資料，並於任務與 UI 全面標示來源，不執行線上爬取。                                             | 報告頂端固定顯示不可關閉橫幅：「示範資料（Mock Dataset），非 @{username} 的真實貼文」。       |
@@ -300,8 +300,8 @@ flowchart TD
 ## 7. 非功能需求（Non-Functional Requirements）
 
 1. **安全性（Security）**：
-   - 嚴格啟用 Supabase RLS，所有後端寫入操作驗證 `auth.uid()`。
-   - 環境變數（`SUPABASE_SERVICE_ROLE_KEY`、`ANTHROPIC_API_KEY`）僅限伺服器端讀取，絕不暴露於前端 Bundle；本機以 `.env`（由 `.env.example` 複製，已列入 `.gitignore`）設定。
+   - 嚴格啟用 PostgreSQL RLS：後端每個交易以受限角色並帶上目前使用者 ID 執行，政策只放行本人的資料。
+   - 環境變數（`DATABASE_URL`、`ANTHROPIC_API_KEY`）僅限伺服器端讀取，絕不暴露於前端 Bundle；本機以 `.env`（由 `.env.example` 複製，已列入 `.gitignore`）設定。
    - 使用者可在網頁輸入自己的 Anthropic API 金鑰：只存於該分頁的 `sessionStorage`（關閉即清除），以請求標頭送至後端代為呼叫，不得放入網址、記錄於日誌或寫入資料庫；回應設為 `Cache-Control: no-store`。
    - 對使用者輸入的帳號名稱與 URL 進行嚴格白名單字元過濾，防範注入攻擊。
 2. **效能與快取（Performance & Caching）**：

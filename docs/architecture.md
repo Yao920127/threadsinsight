@@ -1,7 +1,7 @@
 # 架構決策紀錄（ADR-001）：資料庫、登入與部署
 
 - **日期**：2026-11-19
-- **狀態**：已採用
+- **狀態**：已採用；**資料庫與登入的部分已由 ADR-002 取代**（改用純 PostgreSQL 與自建登入），以下保留當時的紀錄
 - **對應**：PRD 待辦第 8 項；影響第 9 項（登入）、第 10 項（任務管理）、第 13 項（部署）
 
 ## 背景
@@ -84,26 +84,51 @@ flowchart LR
 
 ## 雲端部署：Railway（2026-11-20）
 
-使用者決定部署到 Railway，並在同一個 Railway 專案內**自架 Supabase**（社群範本 `supabase`，約 10 個服務）。
+部署在 Railway 專案 `threadsinsight`，所有自有服務都與 GitHub `main` 分支同步。
 
-| 服務 | 來源 | 說明 |
-| :-- | :-- | :-- |
-| `web` | `docker/web.Dockerfile` | nginx：提供三個頁面並轉送 `/api`；公開網域 |
-| `api` | `docker/api.Dockerfile` | FastAPI；不對外開放，只透過私有網路由 `web` 轉送 |
-| `migrate` | `docker/migrate.Dockerfile` | 每次部署套用尚未執行的 `supabase/migrations/`，執行完即結束 |
+| 服務        | 來源                          | 說明                                                            |
+| :---------- | :---------------------------- | :-------------------------------------------------------------- |
+| `web`       | `docker/web.Dockerfile`       | nginx：提供三個頁面並轉送 `/api`；公開網域                      |
+| `api`       | `docker/api.Dockerfile`       | FastAPI；不對外開放，只透過私有網路由 `web` 轉送                |
+| `migrate`   | `docker/migrate.Dockerfile`   | 每次部署套用尚未執行的 `db/migrations/`，執行完即結束           |
 | `floorplan` | `docker/floorplan.Dockerfile` | 架構圖匯出檔（`docs/floorplan/index.html`）的靜態網站；公開網域 |
-| Supabase（約 10 個服務） | 範本 | Envoy 為對外入口（Auth、REST），金鑰由單一 `ROOT_SECRET` 推導，使用 ES256 簽章與 `sb_publishable_` 金鑰，與後端驗證方式相容 |
+| `Postgres`  | Railway 官方 PostgreSQL       | 資料庫；只走私有網路                                            |
 
 - **與 GitHub 同步**：四個自有服務都連到 `main` 分支，並設定監看路徑，推上 GitHub 後只重新部署有變動的服務。
 - **私有網路**：`web` 以 `API_UPSTREAM`（`api.railway.internal:8000`）轉送；nginx 以 resolver 在請求時解析位址。Railway 私有網路走 IPv6、健康檢查走 IPv4，所以 API 由 `api/serve.py` 建立同時接受兩者的 socket（`PORT=8000`）。
-- **資料庫遷移不走公開網路**：Postgres 的公開 TCP 入口不支援 TLS，因此遷移改由 `migrate` 服務在私有網路內執行，版本記錄在 `supabase_migrations.schema_migrations`。
-- **登入設定**：GoTrue 的網站網址與允許導向網址指向 `web` 的網域；因為沒有寄信服務，`GOTRUE_MAILER_AUTOCONFIRM=true`（註冊即啟用、Magic Link 無法使用）。
+- **資料庫遷移不走公開網路**：Postgres 的公開 TCP 入口不加密，因此遷移由 `migrate` 服務在私有網路內執行，版本記錄在 `public.schema_migrations`。
 - **架構圖更新方式**：重新產生架構圖後執行 `node floorplan/serve.mjs --export docs/floorplan/index.html`，推上 GitHub 即自動更新線上版。
+- **歷程**：最初在 Railway 上自架 Supabase（社群範本，約 10 個服務）。因費用考量，使用者決定刪除，改用 Railway 官方 Postgres 與自建登入（ADR-002）。
+
+## ADR-002：改用純 PostgreSQL 與自建登入（2026-11-20）
+
+- **狀態**：已採用，取代 ADR-001 中「Supabase：Auth、PostgreSQL、RLS」的決定。
+- **背景**：自架 Supabase 需要約 10 個常駐服務，費用與維護負擔都高；使用者決定只用一個 PostgreSQL，本機也不再跑資料庫測試。
+
+| 項目     | 決定                                                     |
+| :------- | :------------------------------------------------------- |
+| 資料庫   | Railway 官方 PostgreSQL（同專案、私有網路）              |
+| 登入     | 自建 Email＋密碼；不驗證信箱，沒有 Magic Link 與忘記密碼 |
+| 資料隔離 | 保留資料庫 RLS                                           |
+| 測試     | 本機只跑單元測試（資料庫以假實作取代）；E2E 對線上版執行 |
+
+**設計**
+
+- **RLS 的生效方式**：後端以資料庫擁有者帳號連線，但每個業務交易一開始就 `SET LOCAL ROLE threadsinsight_app`，並以 `set_config('app.user_id', …, true)` 帶上目前使用者；政策以 `current_app_user()` 比對 `user_id`。受限角色不是表格擁有者，所以 RLS 一定生效；它也沒有 `users`、`sessions` 的權限，讀不到密碼雜湊。
+- **帳號與登入狀態**：`users`（Email、scrypt 雜湊）與 `sessions`（cookie 隨機值的 SHA-256、到期時間）只由後端以擁有者身分存取。登入狀態放在 `HttpOnly`、`Secure`、`SameSite=Strict` 的 cookie，網頁上的 JavaScript 讀不到；登出、刪帳號時在伺服器端作廢。
+- **跨站請求**：cookie 會自動附帶，因此會修改資料的請求若帶著其他網站的 `Origin` 一律拒絕；`SameSite=Strict` 是第二層防護。nginx 以 `$http_host`（含埠號）轉送 Host，讓比對在本機與線上都正確。
+- **前端**：移除 supabase-js；登入頁直接呼叫 `/api/auth/*`；CSP 的 `connect-src` 只剩 `'self'`。
+- **帳號刪除**：新增「刪除自己的帳號」，任務、貼文、報告與登入狀態連帶刪除；E2E 也用它清除測試帳號。
+
+**取捨**
+
+- **少了寄信功能**：不驗證信箱、沒有 Magic Link 與忘記密碼。接上寄信服務（例如 Resend）後可補上。
+- **本機沒有資料庫測試**：RLS 與 SQL 的正確性改由線上 E2E 驗證；開發時另以臨時 Postgres 容器確認過遷移與存取層的 SQL。單元測試用假實作，無法發現 SQL 寫錯，修改資料表或查詢後務必跑線上 E2E。
+- **自管登入的責任**：密碼雜湊、登入狀態、限流、跨站檢查都要自己維護，不能依賴外部服務的更新。
 
 ## 取捨與風險
 
 - **不改寫成 TypeScript**：省下重寫 jieba 斷詞與整套分析的成本，代價是前後端兩種語言。
 - **部署**：最後選擇 Railway 容器（見上方「雲端部署」），AI 端點最壞約 95 秒，容器沒有函式執行時間上限的問題。
-- **自架 Supabase 的維護**：範本由社群維護，不會自動更新；Supabase 的安全更新需自行比對官方 self-hosted 設定後套用。
-- **session 存在 localStorage**：supabase-js 預設做法，頁面若有 XSS 就可能被讀取；因此所有動態內容一律經 `escapeHtml`，並以不允許行內腳本的 CSP 再加一層防護。
+- **登入狀態不放在 localStorage**：改為 httpOnly cookie 後，就算頁面有 XSS 也讀不到登入憑證；所有動態內容仍一律經 `escapeHtml`，並以不允許行內腳本的 CSP 再加一層防護。
 - **本機 Supabase 需要 Docker**：首次 `supabase start` 需下載多個映像檔；只啟用需要的服務以減少下載量。

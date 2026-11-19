@@ -82,9 +82,28 @@ flowchart LR
 - **事件**：`http.request`（不含查詢字串）、`task.created／completed／failed／cache_hit／rerun`（含生成種子與各階段耗時）、`llm.call`（狀態、耗時、token 用量，不含提示內容）、`auth.rejected`、`db.unavailable`。容器內關閉 uvicorn 的存取紀錄（含查詢字串），由應用程式統一記錄。
 - **E2E**（`e2e/`，Playwright）：每個測試自建帳號並在結束後以本機 secret key 刪除（只允許本機網址，key 從 `supabase status` 讀取、不寫入檔案）；共用 fixture 自動檢查 JavaScript 錯誤與 CSP 違規。可對開發伺服器或 docker compose（`E2E_BASE_URL`）執行。
 
+## 雲端部署：Railway（2026-11-20）
+
+使用者決定部署到 Railway，並在同一個 Railway 專案內**自架 Supabase**（社群範本 `supabase`，約 10 個服務）。
+
+| 服務 | 來源 | 說明 |
+| :-- | :-- | :-- |
+| `web` | `docker/web.Dockerfile` | nginx：提供三個頁面並轉送 `/api`；公開網域 |
+| `api` | `docker/api.Dockerfile` | FastAPI；不對外開放，只透過私有網路由 `web` 轉送 |
+| `migrate` | `docker/migrate.Dockerfile` | 每次部署套用尚未執行的 `supabase/migrations/`，執行完即結束 |
+| `floorplan` | `docker/floorplan.Dockerfile` | 架構圖匯出檔（`docs/floorplan/index.html`）的靜態網站；公開網域 |
+| Supabase（約 10 個服務） | 範本 | Envoy 為對外入口（Auth、REST），金鑰由單一 `ROOT_SECRET` 推導，使用 ES256 簽章與 `sb_publishable_` 金鑰，與後端驗證方式相容 |
+
+- **與 GitHub 同步**：四個自有服務都連到 `main` 分支，並設定監看路徑，推上 GitHub 後只重新部署有變動的服務。
+- **私有網路**：`web` 以 `API_UPSTREAM`（`api.railway.internal:8000`）轉送；nginx 以 resolver 在請求時解析位址。Railway 私有網路走 IPv6、健康檢查走 IPv4，所以 API 由 `api/serve.py` 建立同時接受兩者的 socket（`PORT=8000`）。
+- **資料庫遷移不走公開網路**：Postgres 的公開 TCP 入口不支援 TLS，因此遷移改由 `migrate` 服務在私有網路內執行，版本記錄在 `supabase_migrations.schema_migrations`。
+- **登入設定**：GoTrue 的網站網址與允許導向網址指向 `web` 的網域；因為沒有寄信服務，`GOTRUE_MAILER_AUTOCONFIRM=true`（註冊即啟用、Magic Link 無法使用）。
+- **架構圖更新方式**：重新產生架構圖後執行 `node floorplan/serve.mjs --export docs/floorplan/index.html`，推上 GitHub 即自動更新線上版。
+
 ## 取捨與風險
 
 - **不改寫成 TypeScript**：省下重寫 jieba 斷詞與整套分析的成本，代價是前後端兩種語言。
-- **部署延後**：AI 端點最壞約 95 秒（30 秒逾時 × 重試 2 次）。若之後選 Vercel Python Functions，需先確認函式執行時間上限；不足時縮短重試或改用 Railway 容器。
+- **部署**：最後選擇 Railway 容器（見上方「雲端部署」），AI 端點最壞約 95 秒，容器沒有函式執行時間上限的問題。
+- **自架 Supabase 的維護**：範本由社群維護，不會自動更新；Supabase 的安全更新需自行比對官方 self-hosted 設定後套用。
 - **session 存在 localStorage**：supabase-js 預設做法，頁面若有 XSS 就可能被讀取；因此所有動態內容一律經 `escapeHtml`，並以不允許行內腳本的 CSP 再加一層防護。
 - **本機 Supabase 需要 Docker**：首次 `supabase start` 需下載多個映像檔；只啟用需要的服務以減少下載量。

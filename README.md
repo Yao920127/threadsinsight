@@ -6,6 +6,15 @@
 > **本專案只使用合成資料（Mock Dataset），不會抓取或顯示任何帳號的真實貼文。**
 > 所有貼文由「以帳號名稱為種子」的確定性產生器生成，每篇都標記 `is_synthetic = true`，網址使用無法點擊的 `mock://` 偽協議，報告頂端固定顯示「示範資料」橫幅且不可關閉。為什麼這樣做，請見[資料來源與限制](#資料來源與限制)。
 
+## 線上版
+
+| 網站                 | 網址                                                  | 說明                                               |
+| :------------------- | :---------------------------------------------------- | :------------------------------------------------- |
+| ThreadsInsight       | https://web-production-b6984bbe.up.railway.app        | 註冊一個帳號即可使用（不需驗證信箱）               |
+| 架構圖（Floorplan）  | https://floorplan-production-3c17c79e.up.railway.app  | 互動式系統架構圖：各部分、檔案說明與三條導覽流程   |
+
+兩個網站都部署在 Railway，並與本 repo 的 `main` 分支同步：推上 GitHub 後，Railway 只重新部署有變動的服務（依各服務的監看路徑），資料庫遷移也會自動套用。部署細節見 [docs/architecture.md](docs/architecture.md)。
+
 ## 功能
 
 - **會員登入**：Email／密碼或 Magic Link（Supabase Auth）。未登入者看不到任何頁面內容，API 一律回 `401`。
@@ -187,7 +196,8 @@ E2E 測試的注意事項：
 
 ## 已知限制
 
-- **只支援本機部署**：雲端平台（Vercel Python Functions 或 Railway）尚未決定；AI 端點最壞約 95 秒，需先確認平台的執行時間上限。部署到 HTTPS 時需加上 HSTS。
+- **線上版不寄信**：Railway 上自架的 Supabase 沒有設定寄信服務，因此註冊後直接啟用帳號（不驗證信箱），Magic Link 也無法使用；要開放給外部使用者前，應先設定 SMTP 並恢復信箱驗證。
+- **尚未加上 HSTS**：線上版走 Railway 提供的 HTTPS 網域，HSTS 標頭待確定正式網域後再加上。
 - **限流在單一程序內**：多台伺服器或重啟後不共用。
 - **E2E 只測 Chromium**：Firefox、Safari 尚未納入。
 

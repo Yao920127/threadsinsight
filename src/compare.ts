@@ -6,7 +6,7 @@ import { isUnauthorized, type RequestOptions } from "./api/envelope.ts";
 import type { AnalysisTask } from "./api/tasks.ts";
 import { getTask, listTasks } from "./api/tasksClient.ts";
 import { initProtectedPage } from "./auth/protectedPage.ts";
-import { getAccessToken, handleUnauthorized } from "./auth/session.ts";
+import { handleUnauthorized } from "./auth/session.ts";
 import {
   compareCsv,
   compareFileName,
@@ -52,13 +52,14 @@ function setStatus(message: string, tone: "info" | "error" = "info"): void {
       : escapeHtml(message);
 }
 
-async function authOptions(signal: AbortSignal): Promise<RequestOptions> {
-  return { signal, accessToken: await getAccessToken() };
+/** 登入狀態在 httpOnly cookie 裡，由瀏覽器自動帶上；這裡只需要逾時與取消。 */
+function requestOptions(signal: AbortSignal): RequestOptions {
+  return { signal };
 }
 
 function handleError(error: unknown): void {
   if (isUnauthorized(error)) {
-    void handleUnauthorized();
+    handleUnauthorized();
     return;
   }
   setStatus(toUserMessage(error), "error");
@@ -86,7 +87,7 @@ async function compare(ids: readonly string[], moveFocus: boolean): Promise<void
   setStatus(`正在載入 ${ids.length} 個任務的報告…`);
   try {
     const signal = AbortSignal.any([request.signal, AbortSignal.timeout(REQUEST_TIMEOUT_MS)]);
-    const options = await authOptions(signal);
+    const options = requestOptions(signal);
     const loaded = await Promise.all(ids.map((id) => getTask(id, options)));
     if (request.signal.aborted) return;
     const metrics = loaded.flatMap((item) =>
@@ -143,7 +144,7 @@ result.addEventListener("click", (event) => {
 
 async function loadTasks(): Promise<void> {
   try {
-    tasks = (await listTasks(await authOptions(AbortSignal.timeout(REQUEST_TIMEOUT_MS)))).tasks;
+    tasks = (await listTasks(requestOptions(AbortSignal.timeout(REQUEST_TIMEOUT_MS)))).tasks;
   } catch (error) {
     picker.setAttribute("aria-busy", "false");
     picker.innerHTML = "";

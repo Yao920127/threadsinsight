@@ -3,24 +3,34 @@
 - GET /api/mock-posts：即時產生的完整分析報告（不寫入資料庫，供預覽與測試）。
 - /api/tasks…：分析任務管理（建立、列表、檢視、重跑、刪除、AI 建議），見 tasks_api.py。
 
-所有端點都需要 Supabase 登入（Authorization: Bearer <access token>），未登入回 401。
+- /api/auth…：會員註冊、登入、登出（見 auth_api.py）。
+
+除了健康檢查與 /api/auth 的註冊、登入、登出，所有端點都需要登入（httpOnly cookie），未登入回 401。
 """
 
 import logging
 import time
 from collections.abc import Awaitable, Callable
 from typing import Annotated
+from urllib.parse import urlsplit
 
 from fastapi import FastAPI, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from threadsinsightapi.auth import AuthError, AuthUnavailableError
+from threadsinsightapi.auth import (
+    AuthError,
+    EmailTakenError,
+    InvalidCredentialsError,
+    InvalidSignupError,
+)
+from threadsinsightapi.auth_api import router as auth_router
+from threadsinsightapi.db import RepositoryError
 from threadsinsightapi.dependencies import (
     CurrentUser,
+    get_account_store,
     get_ai_client,
     get_client_factory,
-    get_key_resolver,
     get_task_repository,
     require_user,
 )
@@ -35,16 +45,16 @@ from threadsinsightapi.observability import elapsed_ms, log_event, new_request_i
 from threadsinsightapi.pipeline import analyze
 from threadsinsightapi.report import report_data
 from threadsinsightapi.responses import envelope
-from threadsinsightapi.task_repository import RepositoryError, TaskNotFoundError
+from threadsinsightapi.task_repository import TaskNotFoundError
 from threadsinsightapi.task_service import TaskNotReadyError
 from threadsinsightapi.tasks_api import MAX_INPUT_LENGTH, router
 
 # 測試以 dependency_overrides 替換這些相依項目
 __all__ = [
     "app",
+    "get_account_store",
     "get_ai_client",
     "get_client_factory",
-    "get_key_resolver",
     "get_task_repository",
     "require_user",
 ]
@@ -54,8 +64,9 @@ logger = logging.getLogger("threadsinsightapi")
 app = FastAPI(
     title="threadsinsightapi",
     description="Deterministic synthetic Threads-like posts. Never real posts from any account.",
-    version="0.3.0",
+    version="0.4.0",
 )
+app.include_router(auth_router)
 app.include_router(router)
 
 # API 只回 JSON：禁止嵌入、禁止 MIME 猜測、不載入任何資源。
@@ -71,6 +82,19 @@ SECURITY_HEADERS = {
 
 REQUEST_ID_HEADER = "X-Request-ID"
 http_logger = logging.getLogger("threadsinsightapi.http")
+# 會改變資料的請求方法；這些請求若帶著其他網站的 Origin，一律拒絕（防跨站請求偽造）
+UNSAFE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+
+
+def is_cross_site(request: Request) -> bool:
+    """瀏覽器送出的跨站請求會帶 Origin；與本站 Host 不同即為跨站。
+
+    沒有 Origin 的請求不是瀏覽器跨站送出的（例如 curl），不在此限，但仍需登入。
+    """
+    origin = request.headers.get("origin")
+    if request.method not in UNSAFE_METHODS or not origin:
+        return False
+    return urlsplit(origin).netloc != request.headers.get("host", "")
 
 
 @app.middleware("http")
@@ -83,7 +107,11 @@ async def _request_context(
     start = time.perf_counter()
     status = 500
     try:
-        response = await call_next(request)
+        if is_cross_site(request):
+            log_event(logger, "http.cross_site_rejected", logging.WARNING, path=request.url.path)
+            response = envelope(403, error="Cross-site request rejected")
+        else:
+            response = await call_next(request)
         status = response.status_code
         for name, value in SECURITY_HEADERS.items():
             response.headers.setdefault(name, value)
@@ -117,14 +145,23 @@ async def _on_validation_error(_: Request, exc: RequestValidationError) -> JSONR
 
 @app.exception_handler(AuthError)
 async def _on_auth_error(_: Request, exc: AuthError) -> JSONResponse:
-    log_event(logger, "auth.rejected", reason=str(exc))  # 只記錄原因分類，不記錄 token
-    return envelope(401, error="Authentication required", headers={"WWW-Authenticate": "Bearer"})
+    log_event(logger, "auth.rejected", reason=str(exc))  # 只記錄原因分類，不記錄 cookie
+    return envelope(401, error="Authentication required")
 
 
-@app.exception_handler(AuthUnavailableError)
-async def _on_auth_unavailable(_: Request, exc: AuthUnavailableError) -> JSONResponse:
-    log_event(logger, "auth.unavailable", logging.WARNING, reason=str(exc))
-    return envelope(503, error="Authentication service unavailable")
+@app.exception_handler(InvalidCredentialsError)
+async def _on_invalid_credentials(_: Request, _exc: InvalidCredentialsError) -> JSONResponse:
+    return envelope(401, error="Invalid email or password")
+
+
+@app.exception_handler(EmailTakenError)
+async def _on_email_taken(_: Request, _exc: EmailTakenError) -> JSONResponse:
+    return envelope(409, error="Email already registered")
+
+
+@app.exception_handler(InvalidSignupError)
+async def _on_invalid_signup(_: Request, exc: InvalidSignupError) -> JSONResponse:
+    return envelope(400, error=str(exc))
 
 
 @app.exception_handler(RepositoryError)

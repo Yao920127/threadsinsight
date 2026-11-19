@@ -1,11 +1,8 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
+  /** API 的網址前綴；預設為空字串（同源，由 vp dev 或 nginx 轉送 /api）。 */
   readonly VITE_API_BASE_URL?: string;
-  /** 本機 Supabase CLI：http://127.0.0.1:54321（`supabase status` 的 API_URL）。 */
-  readonly VITE_SUPABASE_URL?: string;
-  /** 可公開的 publishable key（`supabase status` 的 PUBLISHABLE_KEY）；絕不可放 secret／service role key。 */
-  readonly VITE_SUPABASE_PUBLISHABLE_KEY?: string;
 }
 
 interface ImportMeta {

@@ -1,5 +1,7 @@
 import { describe, expect, test } from "vite-plus/test";
+import { ApiError } from "../api/envelope.ts";
 import {
+  EMAIL_TAKEN,
   INVALID_CREDENTIALS,
   SESSION_EXPIRED,
   authErrorMessage,
@@ -7,31 +9,23 @@ import {
 } from "./authMessages.ts";
 
 describe("authErrorMessage", () => {
-  test("maps known Supabase codes to Traditional Chinese", () => {
-    expect(authErrorMessage({ code: "invalid_credentials", status: 400 })).toBe(
-      INVALID_CREDENTIALS,
-    );
-    expect(authErrorMessage({ code: "refresh_token_not_found", status: 400 })).toBe(
-      SESSION_EXPIRED,
-    );
-    expect(authErrorMessage({ code: "user_already_exists", status: 422 })).toContain("已經註冊");
-  });
-
-  test("explains network failures", () => {
-    expect(authErrorMessage({ name: "AuthRetryableFetchError", status: 0 })).toContain(
-      "supabase start",
-    );
-  });
-
-  test("handles rate limits without a code", () => {
-    expect(authErrorMessage({ status: 429 })).toContain("稍候");
+  test.each([
+    [new ApiError("http", "Invalid email or password", 401), INVALID_CREDENTIALS],
+    [new ApiError("http", "Email already registered", 409), EMAIL_TAKEN],
+    [new ApiError("http", "Too many attempts", 429), "嘗試次數過多，請稍候一分鐘再試。"],
+    [new ApiError("http", "Invalid email address", 400), "Email 格式不正確，請重新輸入。"],
+    [new ApiError("http", "Password must be 8-128 characters", 400), "密碼需為 8 到 128 個字元。"],
+    [
+      new ApiError("network", "Network request failed"),
+      "無法連線到伺服器，請確認服務已啟動後再試。",
+    ],
+  ])("maps %o", (error, expected) => {
+    expect(authErrorMessage(error)).toBe(expected);
   });
 
   test("never shows raw English messages", () => {
-    const message = authErrorMessage({ code: "something_new", status: 500, message: "Boom" });
-    expect(message).toBe("登入失敗，請稍後再試。");
-    expect(authErrorMessage(new TypeError("x"))).toContain("暫時無法使用");
-    expect(authErrorMessage(null)).toContain("暫時無法使用");
+    expect(authErrorMessage(new ApiError("http", "Boom", 500))).toBe("登入失敗，請稍後再試。");
+    expect(authErrorMessage(new TypeError("x"))).toBe("登入失敗，請稍後再試。");
   });
 });
 

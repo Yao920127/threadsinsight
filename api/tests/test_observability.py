@@ -4,7 +4,7 @@ import json
 import logging
 
 import pytest
-from auth_support import auth_headers, make_token
+from auth_support import auth_headers
 from fastapi.testclient import TestClient
 
 from threadsinsightapi import app as app_module
@@ -160,14 +160,19 @@ class TestTaskLogs:
         assert failed["error_type"] == "RuntimeError"
         assert failed["generate_ms"] >= 0
 
-    def test_tokens_never_appear_in_logs(self, logs) -> None:
-        token = make_token()
-        client = TestClient(app_module.app, headers={"Authorization": f"Bearer {token}"})
+    def test_credentials_never_appear_in_logs(self, logs) -> None:
+        client = TestClient(app_module.app)
+        password = "secret-password-123"
+        client.post("/api/auth/signup", json={"email": "logger@example.com", "password": password})
+        token = client.cookies.get("ti_session")
         client.post("/api/tasks", json={"username": "demo_user", "count": 5})
-        bad = TestClient(app_module.app, headers={"Authorization": f"Bearer {token}x"})
-        bad.get("/api/tasks")
+        client.post("/api/auth/login", json={"email": "logger@example.com", "password": "wrong-1"})
+        TestClient(app_module.app, cookies={"ti_session": "forged"}).get("/api/tasks")
 
         text = as_json(logs.records)
-        assert token not in text
-        assert "Bearer" not in text
+        assert token and token not in text
+        assert password not in text
+        assert "logger@example.com" not in text  # 只記 user_id，不記 Email
+        assert events(logs.records, "auth.signup")
+        assert events(logs.records, "auth.login_failed")
         assert events(logs.records, "auth.rejected")  # 被拒絕的請求也有紀錄

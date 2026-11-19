@@ -10,12 +10,11 @@ describe("toUserMessage", () => {
     [new ApiError("http", "Failed to generate mock dataset", 500), /伺服器.*稍後/],
     [new ApiError("invalid_response", "x", 200), /格式不符/],
     [new ApiError("http", "Authentication required", 401), /登入階段已過期/],
-    [new ApiError("http", "Database unavailable", 503), /資料庫.*supabase start/],
+    [new ApiError("http", "Database unavailable", 503), /資料庫暫時無法使用/],
     [new ApiError("http", "Analysis failed", 500), /重新執行/],
     [new ApiError("http", "Task not found", 404), /找不到/],
     [new ApiError("http", "Task is not completed", 409), /尚未完成/],
     [new ApiError("http", "Too many analysis requests", 429), /稍候一分鐘/],
-    [new ApiError("http", "Authentication service unavailable", 503), /supabase start/],
     [new DOMException("t", "TimeoutError"), /逾時/],
     [new Error("boom"), /未預期/],
   ])("maps %o to a Traditional Chinese message", (error, expected) => {

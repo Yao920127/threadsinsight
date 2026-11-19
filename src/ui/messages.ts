@@ -18,11 +18,8 @@ export function toUserMessage(error: unknown): string {
   if (error.status === 401) {
     return "登入階段已過期，請重新登入。";
   }
-  if (error.status === 503 && /auth/i.test(error.message)) {
-    return "登入驗證服務暫時無法使用，請確認 Supabase 已啟動（supabase start）。";
-  }
   if (error.status === 503 && /database/i.test(error.message)) {
-    return "資料庫暫時無法使用，請確認 Supabase 已啟動（supabase start）。";
+    return "資料庫暫時無法使用，請稍後再試。";
   }
   if (error.message === "Analysis failed") {
     return TASK_FAILED_MESSAGE;

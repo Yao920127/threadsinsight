@@ -4,44 +4,41 @@ from collections.abc import Callable
 from functools import cache
 from typing import Annotated
 
-from fastapi import Depends, Header
+from fastapi import Cookie, Depends
 
+from threadsinsightapi.accounts import AccountStore, PostgresAccountStore
 from threadsinsightapi.ai_strategy import MessagesClient, ai_enabled, create_client
-from threadsinsightapi.auth import (
-    AuthUser,
-    SigningKeyResolver,
-    default_key_resolver,
-    expected_issuer,
-    parse_bearer,
-    verify_access_token,
-)
-from threadsinsightapi.task_repository import (
-    PostgrestTaskRepository,
-    TaskRepository,
-    publishable_key,
-    shared_http_client,
-)
+from threadsinsightapi.auth import SESSION_COOKIE, AuthError, AuthUser
+from threadsinsightapi.db import shared_pool
+from threadsinsightapi.task_repository import PostgresTaskRepository, TaskRepository
 
 
-def get_key_resolver() -> SigningKeyResolver:
-    """Supabase JWKS 公鑰來源；測試換成本機產生的金鑰。"""
-    return default_key_resolver()
+def get_account_store() -> AccountStore:
+    return PostgresAccountStore(shared_pool())
+
+
+Accounts = Annotated[AccountStore, Depends(get_account_store)]
 
 
 def require_user(
-    resolver: Annotated[SigningKeyResolver, Depends(get_key_resolver)],
-    authorization: Annotated[str | None, Header()] = None,
+    accounts: Accounts,
+    session: Annotated[str | None, Cookie(alias=SESSION_COOKIE)] = None,
 ) -> AuthUser:
-    """所有業務端點都需要登入（PRD AC-1）：沒有或無效的 token 一律 401。"""
-    return verify_access_token(parse_bearer(authorization), resolver, expected_issuer())
+    """所有業務端點都需要登入（PRD AC-1）：沒有或無效的登入狀態一律 401。"""
+    if not session:
+        raise AuthError("Missing session cookie")
+    user = accounts.user_for_session(session)
+    if user is None:
+        raise AuthError("Unknown or expired session")
+    return user
 
 
 CurrentUser = Annotated[AuthUser, Depends(require_user)]
 
 
 def get_task_repository(user: CurrentUser) -> TaskRepository:
-    """以使用者自己的 token 存取資料庫，RLS 決定看得到哪些資料（ADR-001 原則 1）。"""
-    return PostgrestTaskRepository(shared_http_client(), publishable_key(), user.access_token)
+    """以目前使用者的身分存取資料庫，RLS 決定看得到哪些資料（ADR-002）。"""
+    return PostgresTaskRepository(shared_pool(), user.id)
 
 
 Repository = Annotated[TaskRepository, Depends(get_task_repository)]

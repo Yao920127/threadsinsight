@@ -70,11 +70,11 @@ describe("task validators", () => {
 });
 
 describe("tasks client", () => {
-  test("createTask posts JSON with the bearer token", async () => {
+  test("createTask posts JSON with the login cookie", async () => {
     const fetchImpl = vi.fn(async () => ok(withReport, 201));
     const result = await createTask(
       { username: "demo_user", count: 30, force: true },
-      { fetchImpl, baseUrl: "", accessToken: "jwt" },
+      { fetchImpl, baseUrl: "" },
     );
     const [url, init] = call(fetchImpl);
     expect(url).toBe("/api/tasks");
@@ -84,10 +84,8 @@ describe("tasks client", () => {
       count: 30,
       force: true,
     });
-    expect(init.headers).toMatchObject({
-      Authorization: "Bearer jwt",
-      "Content-Type": "application/json",
-    });
+    expect(init.credentials).toBe("same-origin");
+    expect(init.headers).toMatchObject({ "Content-Type": "application/json" });
     expect(result.task.id).toBe(ID);
   });
 

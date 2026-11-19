@@ -56,20 +56,20 @@
               </div>
               <div class="field">
                 <label for="password">密碼</label>
-                <span id="password-hint" class="hint">至少 8 個字元</span>
+                <span id="password-hint" class="hint">8 到 128 個字元</span>
                 <input
                   id="password"
                   name="password"
                   type="password"
                   required
                   minlength="8"
-                  maxlength="72"
+                  maxlength="128"
                   autocomplete="current-password"
                   aria-describedby="password-hint"
                   data-error="password-error"
                 />
                 <p id="password-error" class="error-msg">
-                  <span role="img" aria-label="錯誤">⚠</span> 密碼至少需要 8 個字元。
+                  <span role="img" aria-label="錯誤">⚠</span> 密碼需為 8 到 128 個字元。
                 </p>
               </div>
               <div class="login-actions">
@@ -78,30 +78,15 @@
               </div>
             </form>
 
-            <form id="magic-form" class="login-card" aria-labelledby="magic-title">
-              <h2 id="magic-title" class="login-card-title">Magic Link</h2>
-              <p class="hint">不想記密碼？我們會寄一封含登入連結的信給你，請在同一個瀏覽器開啟。</p>
-              <div class="field">
-                <label for="magic-email">Email</label>
-                <input
-                  id="magic-email"
-                  name="email"
-                  type="email"
-                  required
-                  maxlength="254"
-                  autocomplete="email"
-                  autocapitalize="none"
-                  spellcheck="false"
-                  data-error="magic-email-error"
-                />
-                <p id="magic-email-error" class="error-msg">
-                  <span role="img" aria-label="錯誤">⚠</span> 請輸入有效的 Email。
-                </p>
-              </div>
-              <div class="login-actions">
-                <button class="button-outline" type="submit">寄送登入連結</button>
-              </div>
-            </form>
+            <section class="login-card login-notes" aria-labelledby="notes-title">
+              <h2 id="notes-title" class="login-card-title">關於帳號</h2>
+              <ul class="login-note-list">
+                <li>用 Email 和密碼建立帳號即可使用，不需要驗證信箱。</li>
+                <li>密碼經過雜湊後才保存，連管理者也看不到原本的密碼。</li>
+                <li>每個帳號只看得到自己的分析任務。</li>
+                <li>所有貼文都是依帳號名稱產生的示範資料，不是任何人的真實貼文。</li>
+              </ul>
+            </section>
           </div>
           <div id="login-announcer" class="visually-hidden" aria-live="polite"></div>
         </div>

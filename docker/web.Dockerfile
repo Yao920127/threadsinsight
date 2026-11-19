@@ -8,13 +8,6 @@ COPY tsconfig.json vite.config.ts index.html login.html compare.html ./
 COPY public ./public
 COPY shared ./shared
 COPY src ./src
-# 這兩個值會打包進瀏覽器，只能是可公開的 publishable key，絕不可傳 secret／service role key
-ARG VITE_SUPABASE_URL
-ARG VITE_SUPABASE_PUBLISHABLE_KEY
-RUN test -n "$VITE_SUPABASE_URL" && test -n "$VITE_SUPABASE_PUBLISHABLE_KEY" \
-  || (echo "VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY are required (see .env.example)" && exit 1)
-RUN case "$VITE_SUPABASE_PUBLISHABLE_KEY" in sb_publishable_*) ;; \
-  *) echo "VITE_SUPABASE_PUBLISHABLE_KEY must be a publishable key (sb_publishable_...)" && exit 1 ;; esac
 RUN bun run build
 
 FROM nginxinc/nginx-unprivileged:1.29-alpine
@@ -22,7 +15,7 @@ FROM nginxinc/nginx-unprivileged:1.29-alpine
 # 取得 DNS 伺服器（compose 是 Docker 內建 DNS，Railway 是私有網路 DNS），供 nginx 解析 API 位址。
 ENV API_UPSTREAM=api:8000 \
     NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1
-# templates 內的 ${CSP_CONNECT_SRC} 等在容器啟動時由 envsubst 代入
+# templates 內的 ${API_UPSTREAM} 等在容器啟動時由 envsubst 代入
 COPY docker/nginx/default.conf.template docker/nginx/security-headers.inc.template /etc/nginx/templates/
 COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 8080

@@ -63,3 +63,12 @@
 .status[data-tone="success"] {
   color: var(--color-success);
 }
+
+.login-note-list {
+  display: grid;
+  gap: var(--space-xs);
+  margin: 0;
+  padding-inline-start: 1.2em;
+  color: var(--color-body);
+  font-size: 0.9375rem;
+}

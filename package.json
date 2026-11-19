@@ -12,10 +12,7 @@
     "mock:golden": "vpx ./scripts/generate-mock-golden.ts",
     "clean": "vpx ./scripts/clean-cache.ts",
     "e2e": "playwright test -c e2e",
-    "e2e:docker": "E2E_BASE_URL=http://localhost:8080 playwright test -c e2e"
-  },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.119.2"
+    "e2e:local": "E2E_BASE_URL=http://localhost:8080 playwright test -c e2e"
   },
   "devDependencies": {
     "@playwright/test": "^1.65.1",

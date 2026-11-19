@@ -40,9 +40,6 @@ __pycache__/
 .ruff_cache/
 .coverage
 
-# Supabase CLI 本機暫存
-supabase/.temp
-supabase/.branches
 
 # Playwright E2E 產物
 test-results

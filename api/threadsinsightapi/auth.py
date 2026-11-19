@@ -1,105 +1,70 @@
-"""Supabase Auth 登入憑證驗證（ADR-001）。
+"""會員登入的規則與登入憑證（ADR-002：自建 Email＋密碼，不依賴外部登入服務）。
 
-前端以 `Authorization: Bearer <access token>` 呼叫 API。這裡用 Supabase 公開的 JWKS 驗證簽章，
-只接受非對稱演算法（ES256／RS256），並檢查 issuer、audience、到期時間與 role。
-驗證通過後保留原始 token，之後以「使用者身分」存取資料庫時交給 PostgREST，讓 RLS 生效。
+- 登入狀態放在 httpOnly cookie，網頁上的 JavaScript 讀不到；cookie 內是隨機值，
+  資料庫只存它的 SHA-256，登出或刪帳號時在伺服器端作廢。
+- Email 正規化為小寫；密碼長度 8–128 字元。錯誤訊息不透露帳號是否存在。
 """
 
+import hashlib
 import os
-import uuid
+import re
+import secrets
 from dataclasses import dataclass
-from functools import cache
-from typing import Any, Protocol
+from datetime import timedelta
 
-import jwt
+from threadsinsightapi.passwords import MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH
 
-DEFAULT_SUPABASE_URL = "http://127.0.0.1:54321"
-ALLOWED_ALGORITHMS = ("ES256", "RS256")  # 不接受 HS256：共用密鑰一旦外洩即可偽造任何人
-AUDIENCE = "authenticated"
-CLOCK_LEEWAY_SECONDS = 10
-JWKS_CACHE_SECONDS = 300
+SESSION_COOKIE = "ti_session"
+SESSION_TTL = timedelta(days=7)
+TOKEN_BYTES = 32
+MAX_EMAIL_LENGTH = 254
+_EMAIL = re.compile(r"^[^@\s]{1,64}@[^@\s]+\.[^@\s]+$")
 
 
 class AuthError(Exception):
-    """未登入或憑證無效（回 401）。訊息給開發者看，不含 token 內容。"""
+    """未登入或登入狀態無效（回 401）。訊息給開發者看，不含 cookie 內容。"""
 
 
-class AuthUnavailableError(Exception):
-    """無法取得驗證公鑰（Supabase 未啟動或網路問題，回 503）。"""
+class InvalidCredentialsError(Exception):
+    """Email 或密碼錯誤（回 401）；不區分是帳號不存在還是密碼錯。"""
+
+
+class EmailTakenError(Exception):
+    """註冊時 Email 已被使用（回 409）。"""
+
+
+class InvalidSignupError(ValueError):
+    """Email 或密碼格式不符（回 400）。"""
 
 
 @dataclass(frozen=True)
 class AuthUser:
     id: str
-    email: str | None
-    access_token: str  # 之後以使用者身分查詢資料庫時使用；不得記錄或回傳
+    email: str
 
 
-class SigningKeyResolver(Protocol):
-    def get_signing_key_from_jwt(self, token: str) -> Any: ...
+def normalize_email(raw: str) -> str:
+    email = raw.strip().lower()
+    if len(email) > MAX_EMAIL_LENGTH or not _EMAIL.fullmatch(email):
+        raise InvalidSignupError("Invalid email address")
+    return email
 
 
-def supabase_url() -> str:
-    return os.environ.get("SUPABASE_URL", DEFAULT_SUPABASE_URL).rstrip("/")
-
-
-def expected_issuer() -> str:
-    """token 的 iss。容器內以 host.docker.internal 連 Supabase，但 token 由瀏覽器端的網址簽發，
-    兩者不同時以 SUPABASE_JWT_ISSUER 指定。"""
-    return os.environ.get("SUPABASE_JWT_ISSUER") or f"{supabase_url()}/auth/v1"
-
-
-def jwks_url() -> str:
-    return f"{supabase_url()}/auth/v1/.well-known/jwks.json"
-
-
-@cache
-def default_key_resolver() -> SigningKeyResolver:
-    return jwt.PyJWKClient(
-        jwks_url(),
-        cache_keys=True,
-        lifespan=JWKS_CACHE_SECONDS,
-        timeout=5,
-    )
-
-
-def parse_bearer(authorization: str | None) -> str:
-    if not authorization:
-        raise AuthError("Missing bearer token")
-    scheme, _, token = authorization.partition(" ")
-    token = token.strip()
-    if scheme.lower() != "bearer" or not token:
-        raise AuthError("Malformed authorization header")
-    return token
-
-
-def verify_access_token(token: str, resolver: SigningKeyResolver, issuer: str) -> AuthUser:
-    """驗證 Supabase access token；任何不符都丟 AuthError，不透露細節給呼叫端。"""
-    try:
-        signing_key = resolver.get_signing_key_from_jwt(token)
-    except jwt.PyJWKClientConnectionError as error:
-        raise AuthUnavailableError("Cannot fetch JWKS") from error
-    except jwt.PyJWTError as error:
-        raise AuthError("Unknown signing key") from error
-
-    try:
-        claims = jwt.decode(
-            token,
-            key=signing_key.key,
-            algorithms=list(ALLOWED_ALGORITHMS),
-            audience=AUDIENCE,
-            issuer=issuer,
-            leeway=CLOCK_LEEWAY_SECONDS,
-            options={"require": ["exp", "sub", "aud", "iss"]},
+def check_password_rules(password: str) -> None:
+    if not MIN_PASSWORD_LENGTH <= len(password) <= MAX_PASSWORD_LENGTH:
+        raise InvalidSignupError(
+            f"Password must be {MIN_PASSWORD_LENGTH}-{MAX_PASSWORD_LENGTH} characters"
         )
-    except jwt.PyJWTError as error:
-        raise AuthError("Invalid token") from error
 
-    if claims.get("role") != "authenticated":
-        raise AuthError("Token is not for a signed-in user")
-    try:
-        user_id = str(uuid.UUID(str(claims["sub"])))
-    except ValueError as error:
-        raise AuthError("Invalid subject") from error
-    email = claims.get("email")
-    return AuthUser(id=user_id, email=email if isinstance(email, str) else None, access_token=token)
+
+def new_session_token() -> str:
+    return secrets.token_urlsafe(TOKEN_BYTES)
+
+
+def token_hash(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def secure_cookies() -> bool:
+    """正式環境走 HTTPS，cookie 只在 HTTPS 送出；本機 http 開發時設 COOKIE_SECURE=false。"""
+    return os.environ.get("COOKIE_SECURE", "true").lower() != "false"

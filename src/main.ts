@@ -18,7 +18,7 @@ import {
 } from "./api/tasksClient.ts";
 import type { CleanDataset, StrategyResult } from "./api/types.ts";
 import { initProtectedPage } from "./auth/protectedPage.ts";
-import { getAccessToken, handleUnauthorized } from "./auth/session.ts";
+import { handleUnauthorized } from "./auth/session.ts";
 import {
   exportContent,
   exportFileName,
@@ -123,8 +123,9 @@ function syncUrl(taskId: string | null): void {
   window.history.replaceState(null, "", url);
 }
 
-async function authOptions(signal?: AbortSignal): Promise<RequestOptions> {
-  return { signal, accessToken: await getAccessToken() };
+/** 登入狀態在 httpOnly cookie 裡，由瀏覽器自動帶上；這裡只需要逾時與取消。 */
+function requestOptions(signal?: AbortSignal): RequestOptions {
+  return { signal };
 }
 
 function renderTasks(): void {
@@ -134,10 +135,10 @@ function renderTasks(): void {
 async function refreshTasks(): Promise<void> {
   try {
     const signal = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
-    tasks = (await listTasks(await authOptions(signal))).tasks;
+    tasks = (await listTasks(requestOptions(signal))).tasks;
     renderTasks();
   } catch (error) {
-    if (isUnauthorized(error)) void handleUnauthorized();
+    if (isUnauthorized(error)) handleUnauthorized();
     else setStatus(toUserMessage(error), "error");
   } finally {
     if (activeRequest === null) taskPanel.setBusy(false);
@@ -168,14 +169,14 @@ async function loadAiStrategy(taskId: string, refresh: boolean): Promise<void> {
   try {
     const signal = AbortSignal.any([request.signal, AbortSignal.timeout(AI_TIMEOUT_MS)]);
     const strategy = await fetchTaskAiStrategy(taskId, {
-      ...(await authOptions(signal)),
+      ...requestOptions(signal),
       apiKey: getUserKey(),
       refresh,
     });
     if (!request.signal.aborted) replaceStrategy(strategy);
   } catch (error) {
     if (isUnauthorized(error)) {
-      void handleUnauthorized();
+      handleUnauthorized();
       return;
     }
     if (request.signal.aborted || fallbackBase === null) return;
@@ -227,12 +228,12 @@ async function runTaskRequest(
   setStatus(pending);
   try {
     const signal = AbortSignal.any([request.signal, AbortSignal.timeout(REQUEST_TIMEOUT_MS)]);
-    const result = await send(await authOptions(signal));
+    const result = await send(requestOptions(signal));
     if (!request.signal.aborted) showReport(result, loaded);
   } catch (error) {
     if (request.signal.aborted) return; // 被新請求取代的舊請求直接忽略
     if (isUnauthorized(error)) {
-      void handleUnauthorized();
+      handleUnauthorized();
       return;
     }
     setStatus(toUserMessage(error), "error");
@@ -268,7 +269,7 @@ function rerun(task: AnalysisTask): Promise<void> {
 async function remove(task: AnalysisTask): Promise<void> {
   taskPanel.setBusy(true);
   try {
-    await deleteTask(task.id, await authOptions(AbortSignal.timeout(REQUEST_TIMEOUT_MS)));
+    await deleteTask(task.id, requestOptions(AbortSignal.timeout(REQUEST_TIMEOUT_MS)));
     if (currentTask?.id === task.id) {
       activeAi?.abort();
       currentTask = null;
@@ -281,7 +282,7 @@ async function remove(task: AnalysisTask): Promise<void> {
     setStatus(`已刪除 @${task.target_username} 的分析任務。`);
   } catch (error) {
     if (isUnauthorized(error)) {
-      void handleUnauthorized();
+      handleUnauthorized();
       return;
     }
     setStatus(toUserMessage(error), "error");

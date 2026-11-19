@@ -43,17 +43,14 @@ describe("fetchMockPosts", () => {
     expect((error as ApiError).message).toMatch(/username/);
   });
 
-  test("sends the access token as a bearer header", async () => {
+  test("sends the login cookie with same-origin credentials, no auth header", async () => {
     const fetchImpl = vi.fn(async () =>
       jsonResponse({ success: true, data: dataset, error: null }),
     );
-    await fetchMockPosts("demo_user", 30, { fetchImpl, accessToken: "header.payload.sig" });
-    const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
-    expect(url).not.toContain("header.payload.sig");
-    expect(init.headers).toEqual({
-      Accept: "application/json",
-      Authorization: "Bearer header.payload.sig",
-    });
+    await fetchMockPosts("demo_user", 30, { fetchImpl });
+    const [, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    expect(init.credentials).toBe("same-origin");
+    expect(init.headers).toEqual({ Accept: "application/json" });
   });
 
   test("flags 401 responses as unauthorized", async () => {

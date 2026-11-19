@@ -1,4 +1,4 @@
-/** 呼叫 Python API 的共用流程：送出 token、信封格式檢查、錯誤分類，最後驗證 data。 */
+/** 呼叫 Python API 的共用流程：帶上登入 cookie、信封格式檢查、錯誤分類，最後驗證 data。 */
 import { isRecord } from "./validators.ts";
 
 export type ApiErrorKind = "network" | "http" | "invalid_response";
@@ -24,8 +24,6 @@ export interface RequestOptions {
   readonly fetchImpl?: typeof fetch;
   /** 預設為空字串（同源）。開發時由 Vite 把 /api 代理到 Python 服務。 */
   readonly baseUrl?: string;
-  /** Supabase access token；以 Authorization: Bearer 送出，後端驗證後才回資料。 */
-  readonly accessToken?: string | null;
 }
 
 export interface EnvelopeRequest<T> {
@@ -46,11 +44,10 @@ function isAbortOrTimeout(error: unknown): boolean {
   );
 }
 
-function buildHeaders(request: EnvelopeRequest<unknown>, options: RequestOptions) {
+function buildHeaders(request: EnvelopeRequest<unknown>) {
   return {
     Accept: "application/json",
     ...(request.body === undefined ? {} : { "Content-Type": "application/json" }),
-    ...(options.accessToken ? { Authorization: `Bearer ${options.accessToken}` } : {}),
     ...request.headers,
   };
 }
@@ -67,7 +64,9 @@ export async function requestEnvelope<T>(
     response = await fetchImpl(url, {
       method: request.method ?? "GET",
       signal: options.signal,
-      headers: buildHeaders(request, options),
+      // 登入狀態在 httpOnly cookie 裡，同源請求由瀏覽器自動帶上
+      credentials: "same-origin",
+      headers: buildHeaders(request),
       ...(request.body === undefined ? {} : { body: JSON.stringify(request.body) }),
     });
   } catch (error) {

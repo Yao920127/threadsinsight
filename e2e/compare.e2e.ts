@@ -4,8 +4,8 @@ import {
   createTaskViaApi,
   expect,
   expectNoHorizontalScroll,
-  loginViaUi,
   test,
+  useSession,
 } from "./fixtures.ts";
 
 const ACCOUNTS: readonly [string, number][] = [
@@ -16,11 +16,12 @@ const ACCOUNTS: readonly [string, number][] = [
   ["demo_user_03", 8],
 ];
 
-test.beforeEach(async ({ page, user, baseURL }) => {
+test.beforeEach(async ({ page, user }) => {
   for (const [username, count] of ACCOUNTS) {
-    await createTaskViaApi(baseURL ?? "", user, username, count);
+    await createTaskViaApi(user, username, count);
   }
-  await loginViaUi(page, user, "/login?next=%2Fcompare");
+  await useSession(page, user);
+  await page.goto("/compare");
   await expect(page.locator("#compare-picker input")).toHaveCount(ACCOUNTS.length);
 });
 

@@ -1,15 +1,44 @@
-# ThreadsInsight 本機一鍵啟動（ADR-001：先做本機 docker-compose）。
+# ThreadsInsight 本機完整啟動（選用；日常開發只跑單元測試，見 README）。
 #
-#   1. supabase start -x realtime,storage-api,imgproxy,edge-runtime,logflare,vector,supavisor
-#   2. cp .env.example .env（填入需要的值）
-#   3. docker compose up --build
-#   4. 打開 http://localhost:8080
+#   docker compose up --build
+#   打開 http://localhost:8080
 #
-# Supabase 由 Supabase CLI 在本機另外啟動（不在這個 compose 內）；容器透過 host.docker.internal 連線。
+# 包含 Postgres、資料庫遷移、API 與網站。資料存在名為 threadsinsight_db 的 volume，
+# `docker compose down -v` 會連同資料一起刪除。正式環境在 Railway（見 docs/architecture.md）。
 
 name: threadsinsight
 
 services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: threadsinsight
+      # 只供本機使用；不對外開放埠號
+      POSTGRES_PASSWORD: ${LOCAL_DB_PASSWORD:-local-dev-only}
+      POSTGRES_DB: threadsinsight
+    volumes:
+      - threadsinsight_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U threadsinsight -d threadsinsight"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  migrate:
+    build:
+      context: .
+      dockerfile: docker/migrate.Dockerfile
+    environment:
+      PGHOST: db
+      PGUSER: threadsinsight
+      PGPASSWORD: ${LOCAL_DB_PASSWORD:-local-dev-only}
+      PGDATABASE: threadsinsight
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
   api:
     build:
       context: .
@@ -18,18 +47,15 @@ services:
       - path: .env
         required: false
     environment:
-      # 容器內的 127.0.0.1 是容器自己，改用 host.docker.internal 連本機 Supabase
-      SUPABASE_URL: ${DOCKER_SUPABASE_URL:-http://host.docker.internal:54321}
-      # token 的 iss 是瀏覽器使用的網址，與容器內連線用的網址不同
-      SUPABASE_JWT_ISSUER: ${SUPABASE_JWT_ISSUER:-http://127.0.0.1:54321/auth/v1}
-      # 後端以 publishable key＋使用者 token 存取資料庫（RLS），不需要任何 Supabase 密鑰
-      SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY:-${VITE_SUPABASE_PUBLISHABLE_KEY:?set VITE_SUPABASE_PUBLISHABLE_KEY in .env}}
+      DATABASE_URL: postgresql://threadsinsight:${LOCAL_DB_PASSWORD:-local-dev-only}@db:5432/threadsinsight
+      # 本機走 http，cookie 不能加 Secure（正式環境預設為 true）
+      COOKIE_SECURE: "false"
       THREADSINSIGHT_AI: ${THREADSINSIGHT_AI:-auto}
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    # 不對外開放埠號，只有 web 服務能連到
     expose:
       - "8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
     read_only: true
     tmpfs:
       - /tmp
@@ -43,11 +69,6 @@ services:
     build:
       context: .
       dockerfile: docker/web.Dockerfile
-      args:
-        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL:?set VITE_SUPABASE_URL in .env}
-        VITE_SUPABASE_PUBLISHABLE_KEY: ${VITE_SUPABASE_PUBLISHABLE_KEY:?set VITE_SUPABASE_PUBLISHABLE_KEY in .env}
-    environment:
-      CSP_CONNECT_SRC: ${VITE_SUPABASE_URL}
     ports:
       # 只綁定本機，不對區網開放
       - "127.0.0.1:${WEB_PORT:-8080}:8080"
@@ -64,3 +85,6 @@ services:
     security_opt:
       - no-new-privileges:true
     restart: unless-stopped
+
+volumes:
+  threadsinsight_db:

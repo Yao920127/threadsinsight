@@ -1,15 +1,19 @@
 /** 分析任務（PRD F2、AC-1、AC-2、例外情境 7）。 */
 import {
   createTaskViaApi,
+  deleteAccount,
   expect,
   expectNoHorizontalScroll,
-  loginViaUi,
   signUpViaApi,
   test,
+  useSession,
 } from "./fixtures.ts";
 
 test.beforeEach(async ({ page, user }) => {
-  await loginViaUi(page, user);
+  await useSession(page, user);
+  await page.goto("/");
+  await expect(page.locator("#account")).toBeVisible();
+  await expect(page.locator("#task-list")).toHaveAttribute("aria-busy", "false");
 });
 
 async function analyze(page: import("@playwright/test").Page, username: string, count: number) {
@@ -108,13 +112,16 @@ test("刪除前需確認；取消不刪、確認後刪除並清空報告", async
 });
 
 test("無法開啟其他使用者的任務（RLS）", async ({ page, baseURL }) => {
-  const other = await signUpViaApi();
-  const taskId = await createTaskViaApi(baseURL ?? "", other, "demo_user", 5);
-
-  await page.goto(`/?task=${taskId}`);
-  await expect(page.locator("#status")).toHaveText(/找不到這個分析任務/);
-  await expect(page.locator("#report")).toBeHidden();
-  await expect(page.locator(".task-empty")).toBeVisible();
+  const other = await signUpViaApi(baseURL ?? "");
+  try {
+    const taskId = await createTaskViaApi(other, "demo_user", 5);
+    await page.goto(`/?task=${taskId}`);
+    await expect(page.locator("#status")).toHaveText(/找不到這個分析任務/);
+    await expect(page.locator("#report")).toBeHidden();
+    await expect(page.locator(".task-empty")).toBeVisible();
+  } finally {
+    await deleteAccount(other.api);
+  }
 });
 
 test("不合法的帳號格式不會建立任務", async ({ page }) => {

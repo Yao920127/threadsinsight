@@ -1,0 +1,42 @@
+[project]
+name = "threadsinsightapi"
+version = "0.1.0"
+description = "ThreadsInsight Mock Dataset API (synthetic data only; never real Threads posts)"
+requires-python = ">=3.12"
+dependencies = [
+  "anthropic>=1",
+  "fastapi>=0.115",
+  "httpx>=0.28",
+  "jieba>=0.42.1",
+  "pyjwt[crypto]>=2.10",
+  "python-dotenv>=1",
+  "uvicorn>=0.32",
+]
+
+[dependency-groups]
+dev = ["pytest>=8.3", "pytest-cov>=6.0"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+pythonpath = ["api"]
+testpaths = ["api/tests"]
+addopts = "-q"
+# jieba 0.42.1（2020 年後未更新）原始碼含無效跳脫字元，只在編譯時警告，不影響結果
+filterwarnings = ["ignore:invalid escape sequence:SyntaxWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["api"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S"]
+
+[tool.ruff.lint.per-file-ignores]
+"api/tests/**" = ["S101", "S105", "S106"]
+
+[tool.coverage.run]
+# Python 3.12 的 sys.monitoring：不追蹤未量測的檔案。否則 jieba 載入詞典時被逐行追蹤，測試從 1 秒變 30 秒。
+core = "sysmon"

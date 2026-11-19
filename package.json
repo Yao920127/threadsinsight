@@ -1,0 +1,38 @@
+{
+  "name": "threadsinsight",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vp dev",
+    "build": "tsc && vp build",
+    "preview": "vp preview",
+    "api:dev": "uv run uvicorn index:app --app-dir api --reload --port 8000",
+    "api:test": "uv run pytest --cov=threadsinsightapi --cov-report=term-missing",
+    "mock:golden": "vpx ./scripts/generate-mock-golden.ts",
+    "clean": "vpx ./scripts/clean-cache.ts",
+    "e2e": "playwright test -c e2e",
+    "e2e:docker": "E2E_BASE_URL=http://localhost:8080 playwright test -c e2e"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.119.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "@types/node": "^26.6.6",
+    "@vitest/coverage-v8": "5.1.0",
+    "typescript": "~7.0.2",
+    "vite": "npm:@voidzero-dev/vite-plus-core@8.3.8000",
+    "vite-plus": "1.7.0"
+  },
+  "overrides": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@8.3.8000"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "bun",
+      "version": "1.4.4",
+      "onFail": "download"
+    }
+  }
+}

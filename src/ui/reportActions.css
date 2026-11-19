@@ -1,0 +1,19 @@
+/* 報告標題區的動作列：查看全部貼文、匯出 CSV／JSON。窄螢幕自動換行。 */
+
+.report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-block-start: var(--space-xs);
+}
+
+/* .button-outline 原本只用在連結上，套在 <button> 時補上按鈕預設值 */
+button.button-outline {
+  background: transparent;
+  cursor: pointer;
+}
+
+button.button-outline:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}

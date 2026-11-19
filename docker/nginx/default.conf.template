@@ -1,0 +1,48 @@
+# ThreadsInsight 網頁：靜態檔（/、/login、/compare）＋ /api 轉送到 FastAPI。
+server_tokens off;
+
+server {
+    listen 8080;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # API 只接受小型 JSON 請求
+    client_max_body_size 16k;
+
+    location /api/ {
+        proxy_pass http://api:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        # AI 建議最壞約 95 秒（30 秒逾時 × 重試 2 次）
+        proxy_read_timeout 120s;
+        # API 自己設定安全標頭與 Cache-Control: no-store
+    }
+
+    # 檔名含雜湊，內容不變，可長期快取
+    location /assets/ {
+        include /etc/nginx/conf.d/security-headers.inc;
+        add_header Cache-Control "public, max-age=31536000, immutable" always;
+        try_files $uri =404;
+    }
+
+    location = /login {
+        include /etc/nginx/conf.d/security-headers.inc;
+        add_header Cache-Control "no-cache" always;
+        try_files /login.html =404;
+    }
+
+    location = /compare {
+        include /etc/nginx/conf.d/security-headers.inc;
+        add_header Cache-Control "no-cache" always;
+        try_files /compare.html =404;
+    }
+
+    location / {
+        include /etc/nginx/conf.d/security-headers.inc;
+        add_header Cache-Control "no-cache" always;
+        try_files $uri $uri.html $uri/ =404;
+    }
+}

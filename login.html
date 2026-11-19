@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="登入 ThreadsInsight，建立個人的合成資料分析工作區。" />
+    <meta name="theme-color" content="#f5f5f5" />
+    <meta name="referrer" content="no-referrer" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+TC:wght@400;500&family=Noto+Serif+TC:wght@300&display=swap"
+    />
+    <title>登入｜ThreadsInsight</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">跳到主要內容</a>
+
+    <header class="top-nav">
+      <div class="container top-nav-inner">
+        <a class="wordmark" href="/">ThreadsInsight</a>
+        <span class="badge-pill">Mock Dataset</span>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero" aria-labelledby="login-title">
+        <div class="container hero-inner login-inner">
+          <p class="caption-uppercase">會員登入</p>
+          <h1 id="login-title" class="hero-title">登入你的分析工作區</h1>
+          <p class="hero-lead">每位使用者的分析任務彼此隔離，只有你看得到自己的結果。</p>
+
+          <p id="login-status" class="status" role="status" aria-live="polite"></p>
+
+          <div class="login-panels">
+            <form id="password-form" class="login-card" aria-labelledby="password-title">
+              <h2 id="password-title" class="login-card-title">Email 與密碼</h2>
+              <div class="field">
+                <label for="email">Email</label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  maxlength="254"
+                  autocomplete="username"
+                  autocapitalize="none"
+                  spellcheck="false"
+                  data-error="email-error"
+                />
+                <p id="email-error" class="error-msg">
+                  <span role="img" aria-label="錯誤">⚠</span> 請輸入有效的 Email。
+                </p>
+              </div>
+              <div class="field">
+                <label for="password">密碼</label>
+                <span id="password-hint" class="hint">至少 8 個字元</span>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  minlength="8"
+                  maxlength="72"
+                  autocomplete="current-password"
+                  aria-describedby="password-hint"
+                  data-error="password-error"
+                />
+                <p id="password-error" class="error-msg">
+                  <span role="img" aria-label="錯誤">⚠</span> 密碼至少需要 8 個字元。
+                </p>
+              </div>
+              <div class="login-actions">
+                <button class="button-primary" type="submit" value="sign-in">登入</button>
+                <button class="button-outline" type="submit" value="sign-up">建立帳號</button>
+              </div>
+            </form>
+
+            <form id="magic-form" class="login-card" aria-labelledby="magic-title">
+              <h2 id="magic-title" class="login-card-title">Magic Link</h2>
+              <p class="hint">不想記密碼？我們會寄一封含登入連結的信給你，請在同一個瀏覽器開啟。</p>
+              <div class="field">
+                <label for="magic-email">Email</label>
+                <input
+                  id="magic-email"
+                  name="email"
+                  type="email"
+                  required
+                  maxlength="254"
+                  autocomplete="email"
+                  autocapitalize="none"
+                  spellcheck="false"
+                  data-error="magic-email-error"
+                />
+                <p id="magic-email-error" class="error-msg">
+                  <span role="img" aria-label="錯誤">⚠</span> 請輸入有效的 Email。
+                </p>
+              </div>
+              <div class="login-actions">
+                <button class="button-outline" type="submit">寄送登入連結</button>
+              </div>
+            </form>
+          </div>
+          <div id="login-announcer" class="visually-hidden" aria-live="polite"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>ThreadsInsight 僅使用確定性合成資料（Mock Dataset），不會抓取任何帳號的真實貼文。</p>
+      </div>
+    </footer>
+
+    <script type="module" src="/src/login.ts"></script>
+  </body>
+</html>

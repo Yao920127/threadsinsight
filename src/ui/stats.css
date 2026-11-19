@@ -1,0 +1,161 @@
+/* 「內容統計」區塊：平均值、星期 × 時段熱力圖、高頻詞清單。沿用 style.css 的設計 token。 */
+
+.avg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
+  gap: var(--space-sm);
+  margin: 0;
+}
+
+.avg-item {
+  display: grid;
+  gap: var(--space-xxs);
+  padding: var(--space-sm) var(--space-base);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-card);
+}
+
+.avg-item dt {
+  font-size: 0.8125rem;
+  color: var(--color-muted);
+}
+
+.avg-item dd {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: 1.5rem;
+  line-height: 1.1;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 熱力圖佔滿整列，兩張詞頻清單在下方並排，避免三張卡片排成 2 欄時留下空位 */
+.stats-grid .heatmap-card {
+  grid-column: 1 / -1;
+}
+
+/* 熱力圖：8 個 3 小時時段在 320px 也放得下；更窄時容器內捲動，不撐開頁面 */
+.heatmap-scroll {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+}
+
+.heatmap-scroll:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.heatmap {
+  inline-size: 100%;
+  min-inline-size: 14rem;
+  /* 固定欄寬：每個時段格子等寬，不因內容是 0 或 2 而變寬變窄 */
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 2px;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.heatmap th {
+  padding: 0;
+  font-weight: 500;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+.heatmap thead th:first-child {
+  inline-size: 1.75rem;
+}
+
+.heatmap abbr {
+  text-decoration: none;
+}
+
+.heatmap tbody th {
+  padding-inline-end: var(--space-xxs);
+  text-align: end;
+}
+
+.heatmap td {
+  block-size: 2rem;
+  border-radius: 4px;
+  color: var(--color-ink);
+}
+
+/* 單色階：顏色只作輔助，格內一律顯示篇數。選擇器帶 td 才蓋得過 .heatmap td 的文字色 */
+.heatmap td.heat-0 {
+  background: var(--color-canvas-soft);
+  /* 0 刻意淡化，但仍維持 4.5:1 文字對比 */
+  color: var(--color-muted);
+}
+
+.heatmap td.heat-1 {
+  background: var(--color-surface-strong);
+}
+
+.heatmap td.heat-2 {
+  background: color-mix(in oklab, var(--color-primary) 30%, var(--color-surface-card));
+}
+
+.heatmap td.heat-3 {
+  background: color-mix(in oklab, var(--color-primary) 65%, var(--color-surface-card));
+  color: var(--color-on-primary);
+}
+
+.heatmap td.heat-4 {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.term-list {
+  display: grid;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: term;
+}
+
+.term-item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+  counter-increment: term;
+  font-size: 0.9375rem;
+}
+
+.term-item::before {
+  content: counter(term);
+  inline-size: 1.5rem;
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-muted-soft);
+}
+
+.term {
+  flex: 1;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+  color: var(--color-ink);
+}
+
+.term-count {
+  flex: none;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-muted);
+}
+
+/* 長條圖標籤下方的補充文字（例如區間篇數），用於「文字長度」與「貼文類型」兩張圖 */
+.bar-label:has(.bar-detail) {
+  display: grid;
+  line-height: 1.25;
+}
+
+.bar-detail {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}

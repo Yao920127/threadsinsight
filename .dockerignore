@@ -1,0 +1,19 @@
+# 不進入建置環境：金鑰、本機產物、相依套件（容器內重新安裝）
+.env
+.env.*
+!.env.example
+.git
+node_modules
+dist
+coverage
+.venv
+**/__pycache__
+.pytest_cache
+.ruff_cache
+.coverage
+.vscode
+.idea
+.DS_Store
+supabase/.temp
+supabase/.branches
+*.log

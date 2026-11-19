@@ -1,0 +1,12 @@
+# 網頁共用的安全標頭（每個 location 都要 include：nginx 的 add_header 在 location 內一旦出現就不再繼承外層）。
+# ${CSP_CONNECT_SRC} 在容器啟動時代入（瀏覽器直接連 Supabase Auth 的網址）。
+#
+# CSP 不允許任何行內腳本或樣式（'unsafe-inline'）：建置後的頁面只有外部 module script，
+# 長條圖寬度以 CSSOM 設定（不受 style-src 限制）。字型來自 Google Fonts。
+add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' ${CSP_CONNECT_SRC}; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'" always;
+add_header X-Content-Type-Options "nosniff" always;
+add_header X-Frame-Options "DENY" always;
+add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+add_header Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()" always;
+add_header Cross-Origin-Opener-Policy "same-origin" always;
+# Strict-Transport-Security 只在 HTTPS 下有意義；本機 http 不送，部署到 HTTPS 時再加上。

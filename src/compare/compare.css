@@ -1,0 +1,215 @@
+/* 多帳號比較頁（PRD F5、AC-5）：勾選清單與並排比較表。 */
+
+.back-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.compare-form {
+  display: grid;
+  gap: var(--space-base);
+  max-inline-size: 760px;
+  margin-block-start: var(--space-lg);
+  padding: var(--space-lg);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-xxl);
+  background: rgb(255 255 255 / 0.72);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-soft);
+}
+
+.compare-form .button-primary {
+  justify-self: start;
+}
+
+.compare-fieldset {
+  display: grid;
+  gap: var(--space-xs);
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.compare-fieldset legend {
+  padding: 0;
+  font-weight: 500;
+  color: var(--color-ink);
+}
+
+.compare-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.compare-option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: var(--space-sm);
+  align-items: center;
+  min-block-size: 44px;
+  padding: var(--space-sm) var(--space-base);
+  border: 1px solid var(--color-hairline-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-card);
+  cursor: pointer;
+  transition: border-color var(--duration-fast);
+}
+
+.compare-option:has(input:checked) {
+  border-color: var(--color-ink);
+  box-shadow: inset 0 0 0 1px var(--color-ink);
+}
+
+.compare-option:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.compare-option:has(input:focus-visible) {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+.compare-option input {
+  grid-row: span 2;
+  inline-size: 18px;
+  block-size: 18px;
+  accent-color: var(--color-primary);
+}
+
+.compare-option-title {
+  overflow-wrap: anywhere;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.compare-option-meta {
+  font-size: 0.8125rem;
+  color: var(--color-muted);
+}
+
+/* ---------- 比較結果 ---------- */
+
+.compare-result {
+  display: grid;
+  gap: var(--space-base);
+  padding-block: var(--space-xl) var(--space-section);
+}
+
+.compare-result[hidden] {
+  display: none;
+}
+
+.compare-result[aria-busy="true"] {
+  opacity: 0.55;
+}
+
+.compare-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+/* 4 個帳號在窄螢幕放不下時，表格在框內水平捲動，頁面本身不會橫向捲動 */
+.compare-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface-card);
+}
+
+.compare-scroll:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+/* 表格寬度依內容決定（至少填滿外框），數值不換行；放不下時在外框內捲動 */
+.compare-table {
+  inline-size: max-content;
+  min-inline-size: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.compare-table th,
+.compare-table td {
+  padding: var(--space-sm) var(--space-base);
+  border-block-end: 1px solid var(--color-hairline);
+  text-align: start;
+  vertical-align: top;
+}
+
+.compare-table tbody tr:last-child > * {
+  border-block-end: 0;
+}
+
+.compare-table :is(thead th, td) {
+  white-space: nowrap;
+}
+
+.compare-table thead th {
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.compare-table tbody th {
+  inline-size: 9rem;
+  min-inline-size: 9rem;
+  font-weight: 500;
+  color: var(--color-ink);
+}
+
+/* 第一欄固定在左側，水平捲動時仍看得到指標名稱 */
+.compare-table :is(thead td, tbody th) {
+  position: sticky;
+  inset-inline-start: 0;
+  background: var(--color-surface-card);
+}
+
+.compare-hint {
+  display: block;
+  margin-block-start: 2px;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--color-muted);
+}
+
+.compare-table td.is-best {
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.compare-best {
+  display: inline-block;
+  margin-inline-start: var(--space-xxs);
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  background: #dcfce7;
+  color: #166534;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+@media (width < 480px) {
+  .compare-table tbody th {
+    inline-size: 6.5rem;
+    min-inline-size: 6.5rem;
+  }
+
+  .compare-table th,
+  .compare-table td {
+    padding-inline: var(--space-sm);
+  }
+}

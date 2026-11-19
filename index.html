@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="zh-Hant-TW" data-auth="pending">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta
+      name="description"
+      content="ThreadsInsight：以合成示範資料（Mock Dataset）分析 Threads 帳號的互動節奏。"
+    />
+    <meta name="theme-color" content="#f5f5f5" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+TC:wght@400;500&family=Noto+Serif+TC:wght@300&display=swap"
+    />
+    <title>ThreadsInsight</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">跳到主要內容</a>
+
+    <header class="top-nav">
+      <div class="container top-nav-inner">
+        <a class="wordmark" href="/">ThreadsInsight</a>
+        <div class="top-nav-end">
+          <span class="badge-pill">Mock Dataset</span>
+          <div id="account" class="account" hidden>
+            <span class="account-email" id="account-email"></span>
+            <button id="sign-out" class="button-outline account-sign-out" type="button">
+              登出
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="container hero-inner">
+          <p class="caption-uppercase">Threads 互動分析</p>
+          <h1 id="hero-title" class="hero-title">看懂一個帳號的<br />互動節奏</h1>
+          <p class="hero-lead">
+            輸入 Threads 帳號，產生 1–50
+            篇可重現的合成貼文，檢視發文時段、互動分布與表現最好的內容。
+          </p>
+
+          <form id="analyze-form" class="analyze-form" aria-describedby="form-note">
+            <div class="field field-username">
+              <label for="username">Threads 帳號</label>
+              <span id="username-hint" class="hint">例如 demo_user、@demo_user 或個人頁網址</span>
+              <input
+                id="username"
+                name="username"
+                type="text"
+                required
+                maxlength="200"
+                pattern="\s*(@?[A-Za-z0-9._]{1,30}|(https?://)?(www\.)?threads\.(com|net)/@[A-Za-z0-9._]{1,30}([\/?#].*)?)\s*"
+                autocomplete="off"
+                autocapitalize="none"
+                spellcheck="false"
+                enterkeyhint="go"
+                aria-describedby="username-hint"
+                data-error="username-error"
+              />
+              <p id="username-error" class="error-msg">
+                <span role="img" aria-label="錯誤">⚠</span>
+                請輸入英數字、句點或底線組成的帳號（最多 30 字），或 threads.com 個人頁網址。
+              </p>
+            </div>
+            <div class="field field-count">
+              <label for="count">貼文數</label>
+              <span id="count-hint" class="hint">1–50 篇</span>
+              <input
+                id="count"
+                name="count"
+                type="number"
+                inputmode="numeric"
+                required
+                min="1"
+                max="50"
+                step="1"
+                value="30"
+                aria-describedby="count-hint"
+                data-error="count-error"
+              />
+              <p id="count-error" class="error-msg">
+                <span role="img" aria-label="錯誤">⚠</span> 請輸入 1 到 50 之間的整數。
+              </p>
+            </div>
+            <button id="analyze-submit" class="button-primary" type="submit">開始分析</button>
+            <label class="force-option">
+              <input id="force" name="force" type="checkbox" />
+              強制重新分析（忽略 24 小時內的快取）
+            </label>
+          </form>
+          <p id="form-note" class="form-note">
+            所有結果皆為合成示範資料，不會抓取或顯示任何帳號的真實貼文。
+          </p>
+          <details class="ai-settings">
+            <summary>AI 建議設定（選填）</summary>
+            <form id="ai-key-form" class="ai-key-form">
+              <div class="field">
+                <label for="ai-key">Anthropic API 金鑰</label>
+                <span id="ai-key-hint" class="hint">
+                  用來以 Claude Haiku 5.5
+                  產生內容策略建議，費用由此金鑰支付。金鑰只保存在這個分頁（關閉即清除），
+                  只會送到本站伺服器代為呼叫 Anthropic，不會被記錄。伺服器已設定金鑰時可不填。
+                </span>
+                <input
+                  id="ai-key"
+                  name="ai-key"
+                  type="password"
+                  required
+                  maxlength="220"
+                  pattern="\s*sk-ant-[A-Za-z0-9_\-]{20,200}\s*"
+                  placeholder="sk-ant-…"
+                  autocomplete="off"
+                  autocapitalize="none"
+                  spellcheck="false"
+                  aria-describedby="ai-key-hint"
+                  data-error="ai-key-error"
+                />
+                <p id="ai-key-error" class="error-msg">
+                  <span role="img" aria-label="錯誤">⚠</span>
+                  金鑰格式應為 sk-ant- 開頭，可在 Anthropic Console 的 API Keys 頁面取得。
+                </p>
+              </div>
+              <div class="ai-key-actions">
+                <button type="submit" class="button-outline">儲存金鑰</button>
+                <button type="button" id="ai-key-clear" class="button-outline">清除金鑰</button>
+              </div>
+              <p id="ai-key-status" class="hint" role="status" aria-live="polite"></p>
+            </form>
+          </details>
+          <p id="status" class="status" role="status" aria-live="polite"></p>
+          <p id="cache-notice" class="cache-notice" hidden>
+            <span id="cache-notice-text"></span>
+            <button id="cache-rerun" type="button" class="button-outline">重新分析</button>
+          </p>
+          <div id="form-announcer" class="visually-hidden" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <section id="tasks" class="tasks container" aria-labelledby="tasks-title">
+        <div class="tasks-head">
+          <div class="tasks-title-row">
+            <h2 id="tasks-title" class="section-title">我的分析任務</h2>
+            <a class="button-outline tasks-compare-link" href="/compare">多帳號比較</a>
+          </div>
+          <p class="hint">只有你看得到自己的任務；同一帳號與篇數 24 小時內會直接載入快取。</p>
+        </div>
+        <div id="task-list" aria-busy="true">
+          <p class="task-empty">載入中…</p>
+        </div>
+      </section>
+
+      <section id="report" class="report container" aria-label="分析報告" hidden></section>
+
+      <dialog id="delete-dialog" class="confirm-dialog" aria-labelledby="delete-title">
+        <form method="dialog">
+          <h2 id="delete-title" class="confirm-title">刪除分析任務？</h2>
+          <p id="delete-description" class="confirm-text"></p>
+          <div class="confirm-actions">
+            <button type="submit" value="cancel" class="button-outline" autofocus>取消</button>
+            <button type="submit" value="confirm" class="button-danger">刪除</button>
+          </div>
+        </form>
+      </dialog>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>
+          ThreadsInsight 僅使用確定性合成資料（Mock Dataset）。貼文網址為 mock://
+          偽協議，不指向任何真實內容。
+        </p>
+      </div>
+    </footer>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

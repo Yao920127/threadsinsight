@@ -18,6 +18,10 @@ RUN case "$VITE_SUPABASE_PUBLISHABLE_KEY" in sb_publishable_*) ;; \
 RUN bun run build
 
 FROM nginxinc/nginx-unprivileged:1.29-alpine
+# API_UPSTREAM：/api 轉送的目的地。NGINX_ENTRYPOINT_LOCAL_RESOLVERS：啟動時從 /etc/resolv.conf
+# 取得 DNS 伺服器（compose 是 Docker 內建 DNS，Railway 是私有網路 DNS），供 nginx 解析 API 位址。
+ENV API_UPSTREAM=api:8000 \
+    NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1
 # templates 內的 ${CSP_CONNECT_SRC} 等在容器啟動時由 envsubst 代入
 COPY docker/nginx/default.conf.template docker/nginx/security-headers.inc.template /etc/nginx/templates/
 COPY --from=build /app/dist /usr/share/nginx/html

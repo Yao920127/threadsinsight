@@ -11,7 +11,11 @@ server {
     client_max_body_size 16k;
 
     location /api/ {
-        proxy_pass http://api:8000;
+        # API 位址由環境變數決定（compose：api:8000；Railway：api.railway.internal:8000）。
+        # 用變數加 resolver 在請求時才解析，API 晚一點啟動或重新部署換了位址也不會讓 nginx 起不來。
+        resolver ${NGINX_LOCAL_RESOLVERS} valid=10s;
+        set $api_upstream ${API_UPSTREAM};
+        proxy_pass http://$api_upstream;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

@@ -14,7 +14,9 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 
 FROM python:3.12-slim-trixie
+# UVICORN_HOST：compose 用 0.0.0.0；Railway 私有網路走 IPv6，部署時設成 ::
 ENV PATH="/app/.venv/bin:$PATH" \
+    UVICORN_HOST=0.0.0.0 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 RUN groupadd --system app && useradd --system --gid app --no-create-home app
@@ -28,5 +30,5 @@ HEALTHCHECK --interval=15s --timeout=3s --start-period=20s --retries=3 \
   CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=2)"]
 # --proxy-headers：信任 nginx 轉送的來源資訊；只接受同一個 compose 網路內的 web 服務
 # --no-access-log：請求由應用程式以 JSON 記錄（http.request），uvicorn 的存取紀錄含查詢字串，不重複記錄
-CMD ["uvicorn", "index:app", "--app-dir", "api", "--host", "0.0.0.0", "--port", "8000", \
+CMD ["uvicorn", "index:app", "--app-dir", "api", "--port", "8000", \
      "--proxy-headers", "--forwarded-allow-ips", "*", "--no-server-header", "--no-access-log"]

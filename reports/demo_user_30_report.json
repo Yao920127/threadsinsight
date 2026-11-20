@@ -1,0 +1,1327 @@
+{
+  "data_source": "mock_dataset",
+  "source_note": "Scraping blocked (HTTP 401 on graphql/query) & official API unavailable; using deterministic Mock Dataset",
+  "generated_at": "2026-11-20T16:53:58+08:00",
+  "username": "demo_user",
+  "posts": [
+    {
+      "post_url": "mock://threads/@demo_user/post/1",
+      "is_synthetic": true,
+      "published_at": "2026-11-18T23:10:00+08:00",
+      "content": "主管說「有空再看」，通常代表這件事永遠不會被看。重要的事要寫清楚截止日。",
+      "likes_count": 74,
+      "replies_count": 4,
+      "reposts_count": 4,
+      "views_count": 1110,
+      "media_type": "image",
+      "engagement_tier": "low",
+      "engagement_score": 82,
+      "char_count": 36,
+      "hashtag_count": 0,
+      "mention_count": 0,
+      "url_count": 0,
+      "post_type": "image",
+      "engagement_group": "low",
+      "topic": "career",
+      "sentiment": "neutral",
+      "has_question": false,
+      "has_cta": false
+    },
+    {
+      "post_url": "mock://threads/@demo_user/post/2",
+      "is_synthetic": true,
+      "published_at": "2026-11-17T14:28:00+08:00",
+      "content": "學程式最好的方法，是找一個自己真的想解決的小問題開始做。\n如果是你會怎麼做？\n延伸閱讀：https://example.com/notes/2",
+      "likes_count": 310,
+      "replies_count": 38,
+      "reposts_count": 6,
+      "views_count": 6820,
+      "media_type": "text_only",
+      "engagement_tier": "medium",
+      "engagement_score": 386,
+      "char_count": 42,
+      "hashtag_count": 0,
+      "mention_count": 0,
+      "url_count": 1,
+      "post_type": "link",
+      "engagement_group": "medium",
+      "topic": "tech",
+      "sentiment": "neutral",
+      "has_question": true,
+      "has_cta": true
+    },
+    {
+      "post_url": "mock://threads/@demo_user/post/3",
+      "is_synthetic": true,
+      "published_at": "2026-11-16T08:06:00+08:00",
+      "content": "把通知關掉八成之後，專注力回來了，重要的事也沒漏掉。\n想聽聽大家的做法。\n#科技",
+      "likes_count": 1572,
+      "replies_count": 390,
+      "reposts_count": 110,
+      "views_count": 50304,
+      "media_type": "text_only",
+      "engagement_tier": "high",
+      "engagement_score": 2352,
+      "char_count": 38,
+      "hashtag_count": 1,
+      "mention_count": 0,
+      "url_count": 0,
+      "post_type": "hashtag",
+      "engagement_group": "high",
+      "topic": "tech",
+      "sentiment": "neutral",
+      "has_question": false,
+      "has_cta": true
+    },
+    {
+      "post_url": "mock://threads/@demo_user/post/4",
+      "is_synthetic": true,
+      "published_at": "2026-11-12T14:50:00+08:00",
+      "content": "最近開始每天走路三十分鐘，睡眠品質明顯變好了。\n記錄一下。\n延伸閱讀：https://example.com/notes/4",
+      "likes_count": 39,
+      "replies_count": 4,
+      "reposts_count": 2,
+      "views_count": 1443,
+      "media_type": "image",
+      "engagement_tier": "low",
+      "engagement_score": 47,
+      "char_count": 33,
+      "hashtag_count": 0,
+      "mention_count": 0,
+      "url_count": 1,
+      "post_type": "image",
+      "engagement_group": "low",
+      "topic": "life",
+      "sentiment": "positive",
+      "has_question": false,
+      "has_cta": false
+    },
+    {
+      "post_url": "mock://threads/@demo_user/post/5",
+      "is_synthetic": true,
+      "published_at": "2026-11-11T22:58:00+08:00",
+      "content": "比起追求完美，先完成再慢慢改進，往往走得更遠。\n#自我成長",
+      "likes_count": 1542,
+      "replies_count": 142,
+      "reposts_count": 46,
+      "views_count": 20046,
+      "media_type": "image",
+      "engagement_tier": "high",
+      "engagement_score": 1826,
+      "char_count": 28,
+      "hashtag_count": 1,
+      "mention_count": 0,
+      "url_count": 0,
+      "post_type": "image",
+      "engagement_group": "high",
+      "topic": "opinion",
+      "sentiment": "positive",
+      "has_question": false,
+      "has_cta": false
+    },
+    {
+      "post_url": "mock://threads/@demo_user/post/6",
+      "is_synthetic": true,
+      "published_at": "2026-11-10T12:15:00+08:00",
+      "content": "學程式最好的方法，是找一個自己真的想解決的小問題開始做。\n如果是你會怎麼做？\n延伸閱讀：https://example.com/notes/6",
+      "likes_count": 15,
+      "replies_count": 8,
+      "reposts_count": 0,
+      "views_count": 585,
+      "media_type": "text_only",
+      "engagement_tier": "low",
+      "engagement_score": 31,
+      "char_count": 42,
+      "hashtag_count": 0,
+      "mention_count": 0,
+      "url_count": 1,
+      "post_type": "link",
+      "engagement_group": "low",
+      "topic": "tech",
+      "sentiment": "neutral",
+      "has_question": true,
+      "has_cta": true
+    },
+    {
+      "post_url": "mock://threads/@demo_user/post/7",
+      "is_synthetic": true,
+      "published_at": "2026-11-09T08:36:00+08:00",
+      "content": "開始記帳之後才發現，每個月最大的開銷竟然是外送。\n想聽聽大家的做法。\n謝謝 @mock_reader 的提醒。\n#週末",
+      "likes_count": 258,
+      "replies_count": 38,
+      "reposts_count": 3,
+      "views_count": 3870,
+      "media_type": "text_only",
+      "engagement_tier": "medium",
+      "engagement_score": 334,
+      "char_count": 54,
+      "hashtag_count": 1,
+      "mention_count": 1,
+      "url_count": 0,
+      "post_type": "hashtag",
+      "engagement_group": "medium",
+      "topic": "life",
+      "sentiment": "positive",
+      "has_question": false,
+      "has_cta": true
+    },
+    {
+      "post_url": "mock://threads/@demo_user/post/8",
+      "is_synthetic": true,
+      "published_at": "2026-11-08T20:54:00+08:00",
+      "content": "自己煮飯一個月，省下的錢剛好買了一直想要的咖啡機。\n記錄一下。\n#生活 #日常",
+      "likes_count": 2731,
+      "replies_count": 235,
+      "reposts_count": 218,
+      "views_count": 98316,
+      "media_type": "text_only",
+      "engagement_tier": "high",
+      "engagement_score": 3201,
+      "char_count": 36,
+      "hashtag_count": 2,
+      "mention_count": 0,
+      "url_count": 0,
+      "post_type": "hashtag",
+      "engagement_group": "high",
+      "topic": "life",
+      "sentiment": "positive",
+      "has_question": false,
+      "has_cta": false
+    },
+    {
+      "post_url": "mock://threads/@demo_user/post/9",
+      "is_synthetic": true,
+      "published_at": "2026-11-07T18:03:00+08:00",
+      "content": "比起追求完美，先完成再慢慢改進，往往走得更遠。\n如果是你會怎麼做？\n#心態",
+      "likes_count": 244,
+      "replies_count": 33,
+      "reposts_count": 10,
+      "views_count": null,
+      "media_type": "text_only",
+      "engagement_tier": "medium",
+      "engagement_score": 310,
+      "char_count": 35,
+      "hashtag_count": 1,
+      "mention_count": 0,
+      "url_count": 0,
+      "post_type": "hashtag",
+      "engagement_group": "medium",
+      "topic": "opinion",
+      "sentiment": "positive",
+      "has_question": true,
+      "has_cta": true
+    },
+    {
+      "post_url": "mock://threads/@demo_user/post/10",
+      "is_synthetic": true,
+      "published_at": "2026-11-05T20:27:00+08:00",
+      "content": "說「不」其實是在保護自己真正想說「好」的事情。\n想聽聽大家的做法。\n謝謝 @mock_reader 的提醒。",
+      "likes_count": 456,
+      "replies_count": 55,
+      "reposts_count": 18,
+      "views_count": null,
+      "media_type": "image",
+      "engagement_tier": "medium",
+      "engagement_score": 566,
+      "char_count": 50,
+      "hashtag_count": 0,
+      "mention_count": 1,
+      "url_count": 0,
+      "post_type": "image",
+      "engagement_group": "medium",
+      "topic": "opinion",
+      "sentiment": "positive",
+      "has_question": false,
+      "has_cta": true
+    },
+    {
+      "post_url": "mock://threads/@demo_user/post/11",
+      "is_synthetic": true,
+      "published_at": "2026-11-04T19:39:00+08:00",
+      "content": "與其羨慕別人的速度，不如專心把自己的節奏走穩。\n你們也有類似的經驗嗎？\n謝謝 @mock_reader 的提醒。",
+      "likes_count": 263,
+      "replies_count": 21,
+      "reposts_count": 13,
+      "views_count": 10257,
+      "media_type": "text_only",
+      "engagement_tier": "medium",
+      "engagement_score": 305,
+      "char_count": 52,
+      "hashtag_count": 0,
+      "mention_count": 1,
+      "url_count": 0,
+      "post_type": "mention",
+      "engagement_group": "medium",
+      "topic": "opinion",
+      "sentiment": "neutral",
+      "has_question": true,
+      "has_cta": true
+    },
+    {
+      "post_url": "mock://threads/@demo_user/post/12",
+      "is_synthetic": true,
+      "published_at": "2026-11-03T20:53:00+08:00",
+      "content": "說「不」其實是在保護自己真正想說「好」的事情。\n想聽聽大家的做法。\n#心態 #思考",
+      "likes_count": 2908,
+      "replies_count": 199,
+      "reposts_count": 29,
+      "views_count": 101780,
+      "media_type": "text_only",
+      "engagement_tier": "high",
+      "engagement_score": 3306,
+      "char_count": 38,
+      "hashtag_count": 2,
+      "mention_count": 0,
+      "url_count": 0,
+      "post_type": "hashtag",
+      "engagement_group": "high",
+      "topic": "opinion",
+      "sentiment": "positive",
+      "has_question": false,
+      "has_cta": true
+    },
+    {
+      "post_url": "mock://threads/@demo_user/post/13",
+      "is_synthetic": true,
+      "published_at": "2026-11-01T21:15:00+08:00",
+      "content": "和老朋友吃了一頓飯，聊到很晚，原來大家都在各自努力。\n就這樣。",
+      "likes_count": 71,
+      "replies_count": 8,
+      "reposts_count": 6,
+      "views_count": 1917,
+      "media_type": "image",
+      "engagement_tier": "low",
+      "engagement_score": 87,
+      "char_count": 30,
+      "hashtag_count": 0,
+      "mention_count": 0,
+      "url_count": 0,
+      "post_type": "image",
+      "engagement_group": "low",
+      "topic": "life",
+      "sentiment": "positive",
+      "has_question": false,
+      "has_cta": false
+    },
+    {
+      "post_url": "mock://threads/@demo_user/post/14",
+      "is_synthetic": true,
+      "published_at": "2026-10-30T23:25:00+08:00",
+      "content": "資訊越多的時代，越需要練習判斷什麼值得相信。\n謝謝 @sample_friend 的提醒。",
+      "likes_count": 338,
+      "replies_count": 23,
+      "reposts_count": 3,
+      "views_count": 10816,
+      "media_type": "text_only",
+      "engagement_tier": "medium",
+      "engagement_score": 384,
+      "char_count": 42,
+      "hashtag_count": 0,
+      "mention_count": 1,
+      "url_count": 0,
+      "post_type": "mention",
+      "engagement_group": "medium",
+      "topic": "opinion",
+      "sentiment": "positive",
+      "has_question": false,
+      "has_cta": false
+    },
+    {
+      "post_url": "mock://threads/@demo_user/post/15",
+      "is_synthetic": true,
+      "published_at": "2026-10-26T10:06:00+08:00",
+      "content": "說「不」其實是在保護自己真正想說「好」的事情。\n共勉之。",
+      "likes_count": 44,
+      "replies_count": 2,
+      "reposts_count": 4,
+      "views_count": 528,
+      "media_type": "text_only",
+      "engagement_tier": "low",
+      "engagement_score": 48,
+      "char_count": 27,
+      "hashtag_count": 0,
+      "mention_count": 0,
+      "url_count": 0,
+      "post_type": "text_only",
+      "engagement_group": "low",
+      "topic": "opinion",
+      "sentiment": "positive",
+      "has_question": false,
+      "has_cta": false
+    },
+    {
+      "post_url": "mock://threads/@demo_user/post/16",
+      "is_synthetic": true,
+      "published_at": "2026-10-25T20:12:00+08:00",
+      "content": "和老朋友吃了一頓飯，聊到很晚，原來大家都在各自努力。\n想聽聽大家的做法。\n延伸閱讀：https://example.com/notes/16\n#習慣養成 #週末",
+      "likes_count": 6,
+      "replies_count": 10,
+      "reposts_count": 0,
+      "views_count": 186,
+      "media_type": "image",
+      "engagement_tier": "low",
+      "engagement_score": 26,
+      "char_count": 48,
+      "hashtag_count": 2,
+      "mention_count": 0,
+      "url_count": 1,
+      "post_type": "image",
+      "engagement_group": "low",
+      "topic": "life",
+      "sentiment": "positive",
+      "has_question": false,
+      "has_cta": true
+    },
+    {
+      "post_url": "mock://threads/@demo_user/post/17",
+      "is_synthetic": true,
+      "published_at": "2026-10-24T21:33:00+08:00",
+      "content": "週末試著一整天不看手機，結果發現時間變得好長，也好安靜。\n想聽聽大家的做法。\n#日常",
+      "likes_count": 263,
+      "replies_count": 35,
+      "reposts_count": 5,
+      "views_count": 9205,
+      "media_type": "text_only",
+      "engagement_tier": "medium",
+      "engagement_score": 333,
+      "char_count": 40,
+      "hashtag_count": 1,
+      "mention_count": 0,
+      "url_count": 0,
+      "post_type": "hashtag",
+      "engagement_group": "medium",
+      "topic": "life",
+      "sentiment": "positive",
+      "has_question": false,
+      "has_cta": true
+    },
+    {
+      "post_url": "mock://threads/@demo_user/post/18",
+      "is_synthetic": true,
+      "published_at": "2026-10-23T19:42:00+08:00",
+      "content": "別人看到的是結果，只有自己知道過程中放棄了多少次又重新開始。\n就這樣。\n#心態",
+      "likes_count": 454,
+      "replies_count": 28,
+      "reposts_count": 23,
+      "views_count": 12258,
+      "media_type": "text_only",
+      "engagement_tier": "medium",
+      "engagement_score": 510,
+      "char_count": 37,
+      "hashtag_count": 1,
+      "mention_count": 0,
+      "url_count": 0,
+      "post_type": "hashtag",
+      "engagement_group": "medium",
+      "topic": "opinion",
+      "sentiment": "negative",
+      "has_question": false,
+      "has_cta": false
+    },
+    {
+      "post_url": "mock://threads/@demo_user/post/19",
+      "is_synthetic": true,
+      "published_at": "2026-10-22T22:15:00+08:00",
+      "content": "主管說「有空再看」，通常代表這件事永遠不會被看。重要的事要寫清楚截止日。\n大家怎麼看？留言聊聊。",
+      "likes_count": 2428,
+      "replies_count": 223,
+      "reposts_count": 121,
+      "views_count": null,
+      "media_type": "image",
+      "engagement_tier": "high",
+      "engagement_score": 2874,
+      "char_count": 47,
+      "hashtag_count": 0,
+      "mention_count": 0,
+      "url_count": 0,
+      "post_type": "image",
+      "engagement_group": "high",
+      "topic": "career",
+      "sentiment": "neutral",
+      "has_question": true,
+      "has_cta": true
+    },
+    {
+      "post_url": "mock://threads/@demo_user/post/20",
+      "is_synthetic": true,
+      "published_at": "2026-10-21T12:02:00+08:00",
+      "content": "說「不」其實是在保護自己真正想說「好」的事情。\n#思考",
+      "likes_count": 2360,
+      "replies_count": 364,
+      "reposts_count": 94,
+      "views_count": 54280,
+      "media_type": "image",
+      "engagement_tier": "high",
+      "engagement_score": 3088,
+      "char_count": 26,
+      "hashtag_count": 1,
+      "mention_count": 0,
+      "url_count": 0,
+      "post_type": "image",
+      "engagement_group": "high",
+      "topic": "opinion",
+      "sentiment": "positive",
+      "has_question": false,
+      "has_cta": false
+    },
+    {
+      "post_url": "mock://threads/@demo_user/post/21",
+      "is_synthetic": true,
+      "published_at": "2026-10-20T23:51:00+08:00",
+      "content": "團隊合作最怕的不是意見不同，而是大家都不說。\n共勉之。\n延伸閱讀：https://example.com/notes/21\n#遠端工作",
+      "likes_count": 2556,
+      "replies_count": 311,
+      "reposts_count": 179,
+      "views_count": 35784,
+      "media_type": "text_only",
+      "engagement_tier": "high",
+      "engagement_score": 3178,
+      "char_count": 36,
+      "hashtag_count": 1,
+      "mention_count": 0,
+      "url_count": 1,
+      "post_type": "link",
+      "engagement_group": "high",
+      "topic": "career",
+      "sentiment": "neutral",
+      "has_question": false,
+      "has_cta": false
+    },
+    {
+      "post_url": "mock://threads/@demo_user/post/22",
+      "is_synthetic": true,
+      "published_at": "2026-10-19T17:34:00+08:00",
+      "content": "主管說「有空再看」，通常代表這件事永遠不會被看。重要的事要寫清楚截止日。\n就這樣。\n謝謝 @demo.colleague 的提醒。",
+      "likes_count": 590,
+      "replies_count": 29,
+      "reposts_count": 18,
+      "views_count": 23010,
+      "media_type": "text_only",
+      "engagement_tier": "medium",
+      "engagement_score": 648,
+      "char_count": 61,
+      "hashtag_count": 0,
+      "mention_count": 1,
+      "url_count": 0,
+      "post_type": "mention",
+      "engagement_group": "medium",
+      "topic": "career",
+      "sentiment": "positive",
+      "has_question": false,
+      "has_cta": false
+    },
+    {
+      "post_url": "mock://threads/@demo_user/post/23",
+      "is_synthetic": true,
+      "published_at": "2026-10-17T18:05:00+08:00",
+      "content": "把通知關掉八成之後，專注力回來了，重要的事也沒漏掉。\n共勉之。",
+      "likes_count": 53,
+      "replies_count": 6,
+      "reposts_count": 2,
+      "views_count": 1643,
+      "media_type": "image",
+      "engagement_tier": "low",
+      "engagement_score": 65,
+      "char_count": 30,
+      "hashtag_count": 0,
+      "mention_count": 0,
+      "url_count": 0,
+      "post_type": "image",
+      "engagement_group": "low",
+      "topic": "tech",
+      "sentiment": "neutral",
+      "has_question": false,
+      "has_cta": false
+    },
+    {
+      "post_url": "mock://threads/@demo_user/post/24",
+      "is_synthetic": true,
+      "published_at": "2026-10-15T13:23:00+08:00",
+      "content": "說「不」其實是在保護自己真正想說「好」的事情。\n就這樣。\n謝謝 @mock_reader 的提醒。\n#心態",
+      "likes_count": 18,
+      "replies_count": 10,
+      "reposts_count": 0,
+      "views_count": 522,
+      "media_type": "image",
+      "engagement_tier": "low",
+      "engagement_score": 38,
+      "char_count": 48,
+      "hashtag_count": 1,
+      "mention_count": 1,
+      "url_count": 0,
+      "post_type": "image",
+      "engagement_group": "low",
+      "topic": "opinion",
+      "sentiment": "positive",
+      "has_question": false,
+      "has_cta": false
+    },
+    {
+      "post_url": "mock://threads/@demo_user/post/25",
+      "is_synthetic": true,
+      "published_at": "2026-10-14T20:16:00+08:00",
+      "content": "與其羨慕別人的速度，不如專心把自己的節奏走穩。\n謝謝 @mock_reader 的提醒。\n延伸閱讀：https://example.com/notes/25",
+      "likes_count": 281,
+      "replies_count": 52,
+      "reposts_count": 20,
+      "views_count": 4496,
+      "media_type": "text_only",
+      "engagement_tier": "medium",
+      "engagement_score": 385,
+      "char_count": 46,
+      "hashtag_count": 0,
+      "mention_count": 1,
+      "url_count": 1,
+      "post_type": "link",
+      "engagement_group": "medium",
+      "topic": "opinion",
+      "sentiment": "neutral",
+      "has_question": false,
+      "has_cta": false
+    },
+    {
+      "post_url": "mock://threads/@demo_user/post/26",
+      "is_synthetic": true,
+      "published_at": "2026-10-10T12:33:00+08:00",
+      "content": "下雨天最適合待在家裡看書，配一杯熱茶就很滿足。\n如果是你會怎麼做？\n#生活",
+      "likes_count": 2662,
+      "replies_count": 62,
+      "reposts_count": 213,
+      "views_count": 39930,
+      "media_type": "image",
+      "engagement_tier": "high",
+      "engagement_score": 2786,
+      "char_count": 35,
+      "hashtag_count": 1,
+      "mention_count": 0,
+      "url_count": 0,
+      "post_type": "image",
+      "engagement_group": "high",
+      "topic": "life",
+      "sentiment": "positive",
+      "has_question": true,
+      "has_cta": true
+    },
+    {
+      "post_url": "mock://threads/@demo_user/post/27",
+      "is_synthetic": true,
+      "published_at": "2026-10-09T22:59:00+08:00",
+      "content": "自己煮飯一個月，省下的錢剛好買了一直想要的咖啡機。\n就這樣。",
+      "likes_count": 30,
+      "replies_count": 6,
+      "reposts_count": 1,
+      "views_count": 690,
+      "media_type": "image",
+      "engagement_tier": "low",
+      "engagement_score": 42,
+      "char_count": 29,
+      "hashtag_count": 0,
+      "mention_count": 0,
+      "url_count": 0,
+      "post_type": "image",
+      "engagement_group": "low",
+      "topic": "life",
+      "sentiment": "positive",
+      "has_question": false,
+      "has_cta": false
+    },
+    {
+      "post_url": "mock://threads/@demo_user/post/28",
+      "is_synthetic": true,
+      "published_at": "2026-10-08T08:00:00+08:00",
+      "content": "早起一小時做自己的事，是今年最值得的習慣改變。\n大家怎麼看？留言聊聊。",
+      "likes_count": 222,
+      "replies_count": 28,
+      "reposts_count": 11,
+      "views_count": 5550,
+      "media_type": "text_only",
+      "engagement_tier": "medium",
+      "engagement_score": 278,
+      "char_count": 34,
+      "hashtag_count": 0,
+      "mention_count": 0,
+      "url_count": 0,
+      "post_type": "text_only",
+      "engagement_group": "medium",
+      "topic": "life",
+      "sentiment": "positive",
+      "has_question": true,
+      "has_cta": true
+    },
+    {
+      "post_url": "mock://threads/@demo_user/post/29",
+      "is_synthetic": true,
+      "published_at": "2026-10-07T20:18:00+08:00",
+      "content": "密碼管理器用了半年，再也回不去每個網站同一組密碼的日子。\n#數位生活 #AI",
+      "likes_count": 3136,
+      "replies_count": 63,
+      "reposts_count": 188,
+      "views_count": 87808,
+      "media_type": "text_only",
+      "engagement_tier": "high",
+      "engagement_score": 3262,
+      "char_count": 36,
+      "hashtag_count": 2,
+      "mention_count": 0,
+      "url_count": 0,
+      "post_type": "hashtag",
+      "engagement_group": "high",
+      "topic": "tech",
+      "sentiment": "neutral",
+      "has_question": false,
+      "has_cta": false
+    },
+    {
+      "post_url": "mock://threads/@demo_user/post/30",
+      "is_synthetic": true,
+      "published_at": "2026-10-06T21:08:00+08:00",
+      "content": "把每天最難的任務放在早上第一件做，下午的焦慮感少了一半。\n共勉之。",
+      "likes_count": 445,
+      "replies_count": 25,
+      "reposts_count": 4,
+      "views_count": 12460,
+      "media_type": "text_only",
+      "engagement_tier": "medium",
+      "engagement_score": 495,
+      "char_count": 32,
+      "hashtag_count": 0,
+      "mention_count": 0,
+      "url_count": 0,
+      "post_type": "text_only",
+      "engagement_group": "medium",
+      "topic": "career",
+      "sentiment": "negative",
+      "has_question": false,
+      "has_cta": false
+    }
+  ],
+  "cleaning": {
+    "input_count": 30,
+    "output_count": 30,
+    "duplicates_removed": 0,
+    "invalid_removed": 0
+  },
+  "grouping": {
+    "high": 9,
+    "medium": 12,
+    "low": 9,
+    "total": 30,
+    "small_sample": false
+  },
+  "stats": {
+    "averages": {
+      "likes": 879.0,
+      "replies": 81.7,
+      "reposts": 45.0,
+      "engagement": 1005.7,
+      "char_count": 38.9
+    },
+    "length_buckets": [
+      {
+        "key": "0-50",
+        "count": 27,
+        "avg_engagement": 1071.8
+      },
+      {
+        "key": "51-100",
+        "count": 3,
+        "avg_engagement": 411.0
+      },
+      {
+        "key": "101-200",
+        "count": 0,
+        "avg_engagement": 0.0
+      },
+      {
+        "key": "201-400",
+        "count": 0,
+        "avg_engagement": 0.0
+      },
+      {
+        "key": "401+",
+        "count": 0,
+        "avg_engagement": 0.0
+      }
+    ],
+    "post_types": [
+      {
+        "key": "text_only",
+        "count": 3,
+        "avg_engagement": 261.7
+      },
+      {
+        "key": "image",
+        "count": 12,
+        "avg_engagement": 928.3
+      },
+      {
+        "key": "link",
+        "count": 4,
+        "avg_engagement": 944.0
+      },
+      {
+        "key": "hashtag",
+        "count": 8,
+        "avg_engagement": 1646.6
+      },
+      {
+        "key": "mention",
+        "count": 3,
+        "avg_engagement": 432.7
+      }
+    ],
+    "weekday_hour": [
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        1
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        2,
+        0,
+        1,
+        1
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        1
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        1,
+        0,
+        0
+      ]
+    ],
+    "top_hashtags": [
+      {
+        "term": "#心態",
+        "posts": 4
+      },
+      {
+        "term": "#思考",
+        "posts": 2
+      },
+      {
+        "term": "#日常",
+        "posts": 2
+      },
+      {
+        "term": "#生活",
+        "posts": 2
+      },
+      {
+        "term": "#週末",
+        "posts": 2
+      },
+      {
+        "term": "#AI",
+        "posts": 1
+      },
+      {
+        "term": "#數位生活",
+        "posts": 1
+      },
+      {
+        "term": "#科技",
+        "posts": 1
+      },
+      {
+        "term": "#習慣養成",
+        "posts": 1
+      },
+      {
+        "term": "#自我成長",
+        "posts": 1
+      }
+    ],
+    "top_keywords": [
+      {
+        "term": "事情",
+        "posts": 5
+      },
+      {
+        "term": "保護",
+        "posts": 5
+      },
+      {
+        "term": "真正",
+        "posts": 5
+      },
+      {
+        "term": "重要",
+        "posts": 5
+      },
+      {
+        "term": "開始",
+        "posts": 5
+      },
+      {
+        "term": "不會",
+        "posts": 3
+      },
+      {
+        "term": "主管",
+        "posts": 3
+      },
+      {
+        "term": "事要",
+        "posts": 3
+      },
+      {
+        "term": "代表",
+        "posts": 3
+      },
+      {
+        "term": "別人",
+        "posts": 3
+      }
+    ]
+  },
+  "nlp": {
+    "topics": [
+      {
+        "key": "career",
+        "count": 5,
+        "avg_engagement": 1402.2
+      },
+      {
+        "key": "life",
+        "count": 9,
+        "avg_engagement": 796.3
+      },
+      {
+        "key": "tech",
+        "count": 5,
+        "avg_engagement": 1179.4
+      },
+      {
+        "key": "opinion",
+        "count": 11,
+        "avg_engagement": 917.9
+      },
+      {
+        "key": "other",
+        "count": 0,
+        "avg_engagement": 0.0
+      }
+    ],
+    "method": "rule_based_v1",
+    "baseline": {
+      "avg_char_count": 38.9,
+      "avg_sentence_count": 2.4,
+      "question_rate": 0.233,
+      "cta_rate": 0.433,
+      "hashtag_rate": 0.467,
+      "link_rate": 0.2,
+      "mention_rate": 0.233,
+      "image_rate": 0.4,
+      "positive_rate": 0.6,
+      "negative_rate": 0.067
+    },
+    "groups": [
+      {
+        "group": "high",
+        "post_count": 9,
+        "sample_size": 5,
+        "insufficient": false,
+        "sample_urls": [
+          "mock://threads/@demo_user/post/12",
+          "mock://threads/@demo_user/post/29",
+          "mock://threads/@demo_user/post/8",
+          "mock://threads/@demo_user/post/21",
+          "mock://threads/@demo_user/post/20"
+        ],
+        "keywords": [
+          {
+            "term": "密碼",
+            "weight": 0.0495
+          },
+          {
+            "term": "一組",
+            "weight": 0.0248
+          },
+          {
+            "term": "不同",
+            "weight": 0.0248
+          },
+          {
+            "term": "再也",
+            "weight": 0.0248
+          },
+          {
+            "term": "半年",
+            "weight": 0.0248
+          }
+        ],
+        "structure": {
+          "avg_char_count": 34.4,
+          "avg_sentence_count": 1.8,
+          "question_rate": 0.0,
+          "cta_rate": 0.2,
+          "hashtag_rate": 1.0,
+          "link_rate": 0.2,
+          "mention_rate": 0.0,
+          "image_rate": 0.2,
+          "positive_rate": 0.6,
+          "negative_rate": 0.0
+        },
+        "topics": [
+          [
+            "career",
+            1
+          ],
+          [
+            "life",
+            1
+          ],
+          [
+            "tech",
+            1
+          ],
+          [
+            "opinion",
+            2
+          ]
+        ],
+        "observations": [
+          "包含提問的比例 0%，低於整體 23%。",
+          "明確邀請讀者互動的比例 20%，低於整體 43%。",
+          "使用 hashtag 的比例 100%，高於整體 47%；hashtag 可能增加曝光。",
+          "提及其他帳號的比例 0%，低於整體 23%。",
+          "附圖片的比例 20%，低於整體 40%。"
+        ]
+      },
+      {
+        "group": "medium",
+        "post_count": 12,
+        "sample_size": 5,
+        "insufficient": false,
+        "sample_urls": [
+          "mock://threads/@demo_user/post/14",
+          "mock://threads/@demo_user/post/25",
+          "mock://threads/@demo_user/post/2",
+          "mock://threads/@demo_user/post/7",
+          "mock://threads/@demo_user/post/17"
+        ],
+        "keywords": [
+          {
+            "term": "發現",
+            "weight": 0.033
+          },
+          {
+            "term": "一整天",
+            "weight": 0.0165
+          },
+          {
+            "term": "不如",
+            "weight": 0.0165
+          },
+          {
+            "term": "不看",
+            "weight": 0.0165
+          },
+          {
+            "term": "也好",
+            "weight": 0.0165
+          }
+        ],
+        "structure": {
+          "avg_char_count": 44.8,
+          "avg_sentence_count": 2.6,
+          "question_rate": 0.2,
+          "cta_rate": 0.6,
+          "hashtag_rate": 0.4,
+          "link_rate": 0.4,
+          "mention_rate": 0.6,
+          "image_rate": 0.0,
+          "positive_rate": 0.6,
+          "negative_rate": 0.0
+        },
+        "topics": [
+          [
+            "life",
+            2
+          ],
+          [
+            "tech",
+            1
+          ],
+          [
+            "opinion",
+            2
+          ]
+        ],
+        "observations": [
+          "中互動組作為對照，特徵差異僅供參考。",
+          "附外部連結的比例 40%，高於整體 20%。",
+          "提及其他帳號的比例 60%，高於整體 23%。",
+          "附圖片的比例 0%，低於整體 40%。"
+        ]
+      },
+      {
+        "group": "low",
+        "post_count": 9,
+        "sample_size": 5,
+        "insufficient": false,
+        "sample_urls": [
+          "mock://threads/@demo_user/post/16",
+          "mock://threads/@demo_user/post/6",
+          "mock://threads/@demo_user/post/24",
+          "mock://threads/@demo_user/post/27",
+          "mock://threads/@demo_user/post/4"
+        ],
+        "keywords": [
+          {
+            "term": "一頓飯",
+            "weight": 0.0217
+          },
+          {
+            "term": "三十分鐘",
+            "weight": 0.0217
+          },
+          {
+            "term": "努力",
+            "weight": 0.0217
+          },
+          {
+            "term": "原來",
+            "weight": 0.0217
+          },
+          {
+            "term": "各自",
+            "weight": 0.0217
+          }
+        ],
+        "structure": {
+          "avg_char_count": 40.0,
+          "avg_sentence_count": 2.8,
+          "question_rate": 0.2,
+          "cta_rate": 0.4,
+          "hashtag_rate": 0.4,
+          "link_rate": 0.6,
+          "mention_rate": 0.2,
+          "image_rate": 0.8,
+          "positive_rate": 0.8,
+          "negative_rate": 0.0
+        },
+        "topics": [
+          [
+            "life",
+            3
+          ],
+          [
+            "tech",
+            1
+          ],
+          [
+            "opinion",
+            1
+          ]
+        ],
+        "observations": [
+          "附外部連結的比例 60%，高於整體 20%；外部連結可能把讀者帶離貼文。",
+          "附圖片的比例 80%，高於整體 40%；圖片未必提升互動。",
+          "語氣正向的比例 80%，高於整體 60%；正向語氣未必提升互動。"
+        ]
+      }
+    ]
+  },
+  "strategy": {
+    "source": "rule_engine",
+    "insights": [
+      {
+        "category": "hashtag",
+        "title": "使用 hashtag 的貼文互動較高",
+        "evidence": "14 篇平均互動 1696，高於整體平均 1006（69%）。",
+        "action": "每篇加上 1–2 個與主題相符的 hashtag。",
+        "lift": 0.6866157837919735
+      },
+      {
+        "category": "topic",
+        "title": "「職場」主題最受歡迎",
+        "evidence": "5 篇平均互動 1402，高於整體平均 1006（39%）。",
+        "action": "以「職場」為主軸規劃系列內容，其他主題可嘗試與它結合。",
+        "lift": 0.39420654911838793
+      },
+      {
+        "category": "link",
+        "title": "附外部連結的貼文互動較低",
+        "evidence": "6 篇平均互動 640，低於整體平均 1006（36%）。",
+        "action": "把連結移到第一則留言，讓貼文本身完整可讀。",
+        "lift": -0.3641455654248973
+      }
+    ],
+    "rewrite": {
+      "post_url": "mock://threads/@demo_user/post/16",
+      "before": "和老朋友吃了一頓飯，聊到很晚，原來大家都在各自努力。\n想聽聽大家的做法。\n延伸閱讀：https://example.com/notes/16\n#習慣養成 #週末",
+      "after": "和老朋友吃了一頓飯，聊到很晚，原來大家都在各自努力。\n想聽聽大家的做法。\n（連結放在第一則留言）\n#習慣養成 #週末",
+      "changes": [
+        "把外部連結移到第一則留言"
+      ]
+    },
+    "notice": null,
+    "model": null
+  }
+}

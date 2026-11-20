@@ -315,7 +315,8 @@ flowchart TD
    - 關鍵模組（確定性 Mock 生成器、資料清理、指標計算、三群組 NLP 分群、匯出格式轉換）具備自動化單元測試（Jest / Vitest 或 Pytest）。
    - 記錄結構化執行日誌（包含生成種子、任務階段耗時與 LLM 呼叫狀態）。
 6. **部署與一鍵啟動（Deployment & Packaging）**：
-   - 前端與 API 可無縫部署至 Vercel（附 `vercel.json` 設定）。
+   - 網站、API 與 PostgreSQL 部署於 Railway，與 GitHub `main` 分支同步：推上 GitHub 後只重新部署有變動的服務，資料庫遷移由 `migrate` 服務自動套用；部署方式與服務設定見 `docs/architecture.md`。
+   - 不採用 Vercel：AI 策略建議端點最壞約 95 秒，超過函式執行時間上限的風險高；Railway 以常駐容器執行，沒有此限制。
    - 提供 `Dockerfile` / `docker-compose.yml` 與一鍵啟動指令（如 `npm run setup && npm run dev` 或 `docker compose up`），並附上完整 `.env.example`。
 7. **響應式設計（RWD）**：
    - 支援 320 px 以上的手機、平板（直放與橫放）、筆電與桌機（至 2560 px），任何寬度皆不得出現頁面水平捲動。

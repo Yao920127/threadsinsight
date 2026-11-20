@@ -19,7 +19,7 @@ export default defineConfig({
   server: { proxy: apiProxy },
   preview: { proxy: apiProxy },
   // 自動產生的檔案不做格式化：架構圖匯出檔、知識圖譜輸出
-  fmt: { ignorePatterns: ["docs/floorplan/**", "graphify-out/**"] },
+  fmt: { ignorePatterns: ["docs/floorplan/**", "graphify-out/**", "data/**", "reports/**"] },
   lint: {
     jsPlugins: [{ name: "vite-plus", specifier: "vite-plus/oxlint-plugin" }],
     rules: { "vite-plus/prefer-vite-plus-imports": "error" },

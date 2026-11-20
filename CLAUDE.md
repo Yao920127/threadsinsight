@@ -26,6 +26,7 @@ vp run e2e:local                  # 對本機 docker compose（:8080）執行
 vp exec playwright test -c e2e -g "名稱"   # 單一 E2E 測試
 vp run build                      # tsc + 建置三個頁面
 vp run mock:golden                # 重新產生跨語言 golden 檔（改產生器後）
+vp run samples                    # 重新產生 data/、reports/ 範例（可加 帳號 --count N）
 ```
 
 `vp run <script> -- args` 會把 `--` 原樣傳給腳本；給 Playwright 傳參數請用 `vp exec playwright …`。

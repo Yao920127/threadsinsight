@@ -11,6 +11,7 @@
     "api:test": "uv run pytest --cov=threadsinsightapi --cov-report=term-missing",
     "mock:golden": "vpx ./scripts/generate-mock-golden.ts",
     "clean": "vpx ./scripts/clean-cache.ts",
+    "samples": "uv run --directory api python -m threadsinsightapi.sample_report",
     "e2e": "playwright test -c e2e",
     "e2e:local": "E2E_BASE_URL=http://localhost:8080 playwright test -c e2e"
   },

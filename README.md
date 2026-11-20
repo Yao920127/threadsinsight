@@ -95,10 +95,9 @@ shared/                  前後端共用的合成內容庫與跨語言 golden �
 data/                    範例合成資料（`vp run samples` 產生）
 reports/                 範例分析報告：Markdown（含 2 張圖）與完整 JSON
 docker/                  Dockerfile、資料庫遷移腳本與 nginx 設定（CSP、安全標頭）
-docs/architecture.md     架構決策紀錄（ADR-001、ADR-002）
+docs/                    開發文件（目錄見 docs/README.md）：PRD、API 規格、架構決策、資料表說明、設計稿、考題對照
 docs/floorplan/          架構圖匯出檔（線上架構圖網站的內容）
-threadsinsightapi.md     API 與 Mock Dataset 規格書
-threadsinsight_prd-1.md  產品需求文件
+AI_LOG.md                AI 協作開發紀錄
 ```
 
 ## 測試與檢查
@@ -151,7 +150,7 @@ E2E 測試的注意事項：
 | 常見關鍵字／hashtag | 以「出現在幾篇貼文」計數，各取前 10 名；關鍵字用 jieba 繁體詞典斷詞，並排除停用詞                                                                                                      |
 | 策略觀察            | 在發文時段、貼文類型、主題、字數、是否提問、是否用 hashtag、是否附連結等面向，找出平均互動數和整體差距最大的 3 點；每組至少要有足夠篇數、差距至少 10% 才列出，屬相關性觀察，不代表因果 |
 
-更細的規則（例如 hashtag、mention 的判斷方式）見 [threadsinsightapi.md](threadsinsightapi.md) 第 2.1 節。
+更細的規則（例如 hashtag、mention 的判斷方式）見 [docs/api-spec.md](docs/api-spec.md) 第 2.1 節。
 
 範例資料與報告在 [data/](data/) 和 [reports/](reports/)，可用 `vp run samples` 重新產生（預設 `demo_user` 30 篇；也可指定帳號與篇數，例如 `vp run samples another_demo --count 50`）。
 
@@ -182,7 +181,7 @@ E2E 測試的注意事項：
 
 - 報告中的數字**不代表任何真實帳號的表現**，只用來展示分析流程與介面。
 - 帳號名稱只作為亂數種子；輸入真實存在的帳號也不會取得或推測其內容。
-- 完整規則見 [threadsinsightapi.md](threadsinsightapi.md) 第 4、5 節。
+- 完整規則見 [docs/api-spec.md](docs/api-spec.md) 第 4、5 節。
 
 ## 安全設計
 
@@ -202,7 +201,12 @@ E2E 測試的注意事項：
 
 ## 相關文件
 
+開發文件都放在 [docs/](docs/)，從 [docs/README.md](docs/README.md) 開始看最快。
+
+- [docs/exam.md](docs/exam.md)：考題、開發時間表與考題要求逐項對照
+- [docs/prd.md](docs/prd.md)：產品需求文件
+- [docs/api-spec.md](docs/api-spec.md)：API 端點、欄位定義與 Mock Dataset 規則
 - [docs/architecture.md](docs/architecture.md)：架構決策紀錄（資料庫、登入、任務管理、比較頁、部署）
-- [threadsinsightapi.md](threadsinsightapi.md)：API 端點、欄位定義與 Mock Dataset 規則
-- [threadsinsight_prd-1.md](threadsinsight_prd-1.md)：產品需求文件
+- [docs/schema.md](docs/schema.md)：資料表說明
+- [docs/design.md](docs/design.md)：視覺設計稿
 - [AI_LOG.md](AI_LOG.md)：AI 協作開發紀錄

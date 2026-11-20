@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-ThreadsInsight：輸入 Threads 帳號，以**確定性合成資料（Mock Dataset）**產生貼文並分析互動、NLP 歸因與內容策略。前端 Vite+ / TypeScript（無框架），後端 Python FastAPI，資料庫是 PostgreSQL（RLS），登入為自建 Email＋密碼（ADR-002）。產品需求在 `threadsinsight_prd-1.md`，API 與合成資料規格在 `threadsinsightapi.md`，架構決策在 `docs/architecture.md`（ADR-001、ADR-002）。線上版部署在 Railway（見 README「線上版」）。
+ThreadsInsight：輸入 Threads 帳號，以**確定性合成資料（Mock Dataset）**產生貼文並分析互動、NLP 歸因與內容策略。前端 Vite+ / TypeScript（無框架），後端 Python FastAPI，資料庫是 PostgreSQL（RLS），登入為自建 Email＋密碼（ADR-002）。產品需求在 `docs/prd.md`，API 與合成資料規格在 `docs/api-spec.md`，架構決策在 `docs/architecture.md`（ADR-001、ADR-002）。線上版部署在 Railway（見 README「線上版」）。
 
 ## 指令
 
@@ -17,7 +17,7 @@ vp run api:dev                    # FastAPI :8000（需要 DATABASE_URL 才能�
 vp dev                            # 前端 :5173，/api 代理到 8000
 
 # 檢查與測試
-vp check                          # 格式 + lint + 型別（DESIGN.md 的格式錯誤是使用者的檔案，刻意不改）
+vp check                          # 格式 + lint + 型別（docs/design.md 的格式錯誤是使用者的檔案，刻意不改）
 vp test                           # Vitest；單檔：vp test src/ui/taskList.test.ts；單一測試：vp test -t "名稱"
 vp run api:test                   # pytest + 覆蓋率；單一測試：uv run pytest api/tests/test_tasks_api.py::TestCreate::test_force_bypasses_cache
 uv run ruff check api && uv run ruff format api

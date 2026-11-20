@@ -1,5 +1,5 @@
 /*
- * 設計系統依 DESIGN.md：米白畫布、暖近黑墨色、細字重襯線標題、粉彩光暈只作氛圍。
+ * 設計系統依 docs/design.md：米白畫布、暖近黑墨色、細字重襯線標題、粉彩光暈只作氛圍。
  * 標題用 Noto Serif TC 300（Waldenburg 為授權字型；EB Garamond 無 300 字重且不含中文）。
  */
 
@@ -325,7 +325,7 @@ html {
   padding-block: var(--space-section);
 }
 
-/* 粉彩光暈：純氛圍裝飾，不承載內容（DESIGN.md：gradient orbs are pure atmosphere） */
+/* 粉彩光暈：純氛圍裝飾，不承載內容（docs/design.md：gradient orbs are pure atmosphere） */
 .hero::before,
 .hero::after {
   content: "";

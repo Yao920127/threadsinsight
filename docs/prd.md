@@ -67,7 +67,7 @@
 - **觸發條件**：分析任務進入 `generating` 階段。
 - **輸入資料**：正規化後的 Threads `username` 與目標數量（1–50 的整數，預設 30）。
 - **處理流程**：
-  1. **合成資料生成（一律採用 Mock Dataset 規則，詳見 `threadsinsightapi.md` §4）**：
+  1. **合成資料生成（一律採用 Mock Dataset 規則，詳見 `docs/api-spec.md` §4）**：
      - **採用原因**：實測未登入狀態下 `threads.com` GraphQL 回傳 HTTP 401，且官方 API 申請受限無法讀取他人帳號；為確保開發順暢與合規性，系統**一律使用合成擬真資料**。
      - **確定性種子（Deterministic Seed）**：以正規化後的 `username` 作為亂數種子，確保同一帳號每次生成的貼文內容、時間與互動數據完全一致，利於測試與 24 小時快取比對。
      - **防誤認與透明標示**：
@@ -154,31 +154,35 @@ flowchart TD
 
 ### 4.1 資料表設計（ER 關聯與欄位規格）
 
-所有資料表皆建置於 PostgreSQL，並透過 `user_id` 關聯至 `users`（帳號表，由後端自行管理，見 ADR-002）。
+所有資料表皆建置於 PostgreSQL，業務資料表透過 `user_id` 關聯至 `users`（帳號表，由後端自行管理，見 ADR-002）。實際定義見 `db/migrations/20261120120000_initial_schema.sql`，白話說明見 `docs/schema.md`。
 
-#### 1. `profiles`（使用者資料表）
+#### 1. `users`（會員帳號表）與 `sessions`（登入狀態表）
 
-| 欄位名稱       | 資料型別      | 必填 | 預設值 / 約束             | 說明             |
-| :------------- | :------------ | :--: | :------------------------ | :--------------- |
-| `id`           | `uuid`        |  是  | `PK, FK -> auth.users.id` | 使用者唯一識別碼 |
-| `email`        | `text`        |  是  | `UNIQUE`                  | 使用者註冊信箱   |
-| `display_name` | `text`        |  否  | `null`                    | 顯示名稱         |
-| `created_at`   | `timestamptz` |  是  | `now()`                   | 建立時間         |
+| 欄位名稱        | 資料型別      | 必填 | 預設值 / 約束                    | 說明                                    |
+| :-------------- | :------------ | :--: | :------------------------------- | :-------------------------------------- |
+| `id`            | `uuid`        |  是  | `PK, gen_random_uuid()`          | 使用者唯一識別碼                        |
+| `email`         | `text`        |  是  | `UNIQUE`，必須為小寫、3–254 字元 | 使用者註冊信箱                          |
+| `password_hash` | `text`        |  是  | `NOT NULL`                       | scrypt 雜湊（`scrypt$n$r$p$salt$hash`） |
+| `created_at`    | `timestamptz` |  是  | `now()`                          | 建立時間                                |
+
+`sessions`：`token_hash`（`text`，PK，64 碼小寫 hex，為 cookie 隨機值的 SHA-256）、`user_id`（`FK -> users.id ON DELETE CASCADE`）、`created_at`、`expires_at`（登入後 7 天）。資料庫只存雜湊，不存可直接使用的登入憑證。
 
 #### 2. `analysis_tasks`（分析任務表）
 
 | 欄位名稱          | 資料型別      | 必填 | 預設值 / 約束                                                                       | 說明                                                            |
 | :---------------- | :------------ | :--: | :---------------------------------------------------------------------------------- | :-------------------------------------------------------------- |
 | `id`              | `uuid`        |  是  | `PK, gen_random_uuid()`                                                             | 任務唯一 ID                                                     |
-| `user_id`         | `uuid`        |  是  | `FK -> profiles.id (ON DELETE CASCADE)`                                             | 任務擁有者 ID                                                   |
+| `user_id`         | `uuid`        |  是  | `FK -> users.id (ON DELETE CASCADE)`                                                | 任務擁有者 ID                                                   |
 | `target_username` | `text`        |  是  | `NOT NULL`                                                                          | 正規化後的 Threads 帳號（不含 `@`）                             |
 | `target_url`      | `text`        |  是  | `NOT NULL`                                                                          | 原始輸入或標準化帳號 URL                                        |
+| `requested_count` | `int4`        |  是  | `30`，1–50                                                                          | 使用者要求的篇數                                                |
 | `status`          | `text`        |  是  | `'pending'`                                                                         | `pending` / `generating` / `analyzing` / `completed` / `failed` |
 | `data_source`     | `text`        |  是  | `'mock_dataset'`                                                                    | 固定為 `'mock_dataset'`（合成擬真資料）                         |
 | `source_note`     | `text`        |  是  | `'Scraping blocked (HTTP 401) & API unavailable; using deterministic Mock Dataset'` | 資料來源技術說明                                                |
 | `post_count`      | `int4`        |  是  | `0`                                                                                 | 實際收錄有效貼文數                                              |
 | `error_message`   | `text`        |  否  | `null`                                                                              | 失敗時的錯誤原因                                                |
 | `created_at`      | `timestamptz` |  是  | `now()`                                                                             | 建立時間                                                        |
+| `started_at`      | `timestamptz` |  是  | `now()`                                                                             | 本次執行開始時間（重跑時更新，用於判斷卡住超過 3 分鐘）         |
 | `completed_at`    | `timestamptz` |  否  | `null`                                                                              | 完成時間（用於快取判斷）                                        |
 
 #### 3. `posts`（貼文明細資料表）
@@ -187,7 +191,7 @@ flowchart TD
 | :----------------- | :------------ | :--: | :-------------------------------------------- | :------------------------------------------------ |
 | `id`               | `uuid`        |  是  | `PK, gen_random_uuid()`                       | 貼文紀錄 ID                                       |
 | `task_id`          | `uuid`        |  是  | `FK -> analysis_tasks.id (ON DELETE CASCADE)` | 所屬分析任務 ID                                   |
-| `user_id`          | `uuid`        |  是  | `FK -> profiles.id (ON DELETE CASCADE)`       | 冗餘儲存以加速 RLS 驗證                           |
+| `user_id`          | `uuid`        |  是  | `FK -> users.id (ON DELETE CASCADE)`          | 冗餘儲存以加速 RLS 驗證                           |
 | `platform_post_id` | `text`        |  是  | `UNIQUE(task_id, platform_post_id)`           | 合成貼文識別碼（防重複）                          |
 | `post_url`         | `text`        |  是  | `NOT NULL`                                    | 固定為 `mock://threads/@{username}/post/{n}` 格式 |
 | `is_synthetic`     | `boolean`     |  是  | `true`                                        | 逐筆標示為合成資料（固定為 `true`）               |
@@ -204,6 +208,12 @@ flowchart TD
 | `mention_count`    | `int4`        |  是  | `0`                                           | Mention（`@`）數量                                |
 | `url_count`        | `int4`        |  是  | `0`                                           | 外部連結數量                                      |
 | `post_type`        | `text`        |  是  | `'text_only'`                                 | 貼文類型（純文字/含圖片/含連結/含標籤等）         |
+| `engagement_tier`  | `text`        |  是  | `high` / `medium` / `low`                     | 生成器預設的互動層級                              |
+| `media_type`       | `text`        |  是  | `'text_only'`                                 | `text_only` / `image`                             |
+| `topic`            | `text`        |  否  | `null`                                        | `career` / `life` / `tech` / `opinion` / `other`  |
+| `sentiment`        | `text`        |  否  | `null`                                        | `positive` / `neutral` / `negative`               |
+| `has_question`     | `boolean`     |  否  | `null`                                        | 是否含提問                                        |
+| `has_cta`          | `boolean`     |  否  | `null`                                        | 是否含邀請互動用語                                |
 
 #### 4. `analysis_summaries`（彙總分析結果表）
 
@@ -211,20 +221,21 @@ flowchart TD
 | :--------------------- | :------------ | :--: | :---------------------------------------------------- | :---------------------------------------------- |
 | `id`                   | `uuid`        |  是  | `PK, gen_random_uuid()`                               | 彙總 ID                                         |
 | `task_id`              | `uuid`        |  是  | `UNIQUE, FK -> analysis_tasks.id (ON DELETE CASCADE)` | 對應分析任務                                    |
-| `user_id`              | `uuid`        |  是  | `FK -> profiles.id (ON DELETE CASCADE)`               | 任務擁有者 ID                                   |
+| `user_id`              | `uuid`        |  是  | `FK -> users.id (ON DELETE CASCADE)`                  | 任務擁有者 ID                                   |
 | `overview_metrics`     | `jsonb`       |  是  | `'{}'`                                                | 總互動、平均 like/reply/repost、最佳類型等      |
 | `top_posts`            | `jsonb`       |  是  | `'[]'`                                                | 加權互動分前 5 篇貼文明細                       |
 | `distributions`        | `jsonb`       |  是  | `'{}'`                                                | 發文時段分布、文字長度分布、類型與主題分布      |
-| `keywords_hashtags`    | `jsonb`       |  是  | `'[]'`                                                | 常見關鍵字與 Hashtag 統計                       |
+| `keywords_hashtags`    | `jsonb`       |  是  | `'{}'`                                                | 常見關鍵字與 Hashtag 統計                       |
 | `nlp_cluster_analysis` | `jsonb`       |  是  | `'{}'`                                                | 高/中/低三組（各 3-5 篇）NLP 關鍵特徵與成因分析 |
-| `strategy_insights`    | `jsonb`       |  是  | `'[]'`                                                | 3 點內容策略觀察與 LLM 優化建議                 |
+| `strategy_insights`    | `jsonb`       |  是  | `'{}'`                                                | 3 點內容策略觀察與 LLM 優化建議                 |
 | `created_at`           | `timestamptz` |  是  | `now()`                                               | 產出時間                                        |
 
 ### 4.2 權限控管（Row Level Security, RLS）
 
-- 所有 4 張資料表皆強制開啟 `ALTER TABLE ... ENABLE ROW LEVEL SECURITY;`。
-- **存取原則**：僅允許已驗證使用者（`auth.uid()`）對 `user_id = auth.uid()`（`profiles` 表則為 `id = auth.uid()`）的資料列執行 `SELECT`、`INSERT`、`UPDATE`、`DELETE`。
-- **未登入者（`anon` role）**：完全拒絕讀取或寫入任何業務資料表。
+- `analysis_tasks`、`posts`、`analysis_summaries` 皆開啟 `ENABLE ROW LEVEL SECURITY`。
+- **存取原則**：後端每個交易先 `SET LOCAL ROLE threadsinsight_app`（無登入權限的受限角色），再以 `set_config('app.user_id', …, true)` 帶入目前使用者；政策只放行 `user_id = current_app_user()` 的資料列。`posts`、`analysis_summaries` 寫入時另檢查所屬任務也屬於本人。
+- **帳號與登入狀態**：`users`、`sessions` 不授權給受限角色，只能由後端以資料庫擁有者身分處理登入時存取。
+- **未登入者**：API 一律回 `401`，不會開啟任何業務資料交易；他人的任務在 RLS 下等同不存在，一律回 `404`。
 
 ---
 

@@ -228,7 +228,7 @@ vercel.json 或 Vercel 部署設定說明
 不能直接照用的是考題的交付格式：
 
 - 沒有 `vercel.json`，改附 Railway 的部署說明（在 `docs/architecture.md`）。
-- 資料表的設計放在 `db/migrations/`，不是 `supabase/migrations/`。
+- 資料表的設計放在 `db/migrations/`，不是 `supabase/migrations/`；另外附一份白話的資料表說明 `docs/schema.md`。
 
 ### 考題要求逐項對照
 
@@ -251,9 +251,10 @@ vercel.json 或 Vercel 部署設定說明
 | 6\. Docker 或一鍵啟動                                                       |  ✅  | `docker compose up --build`                                                     |
 | 6\. 用 LLM 產生內容策略建議                                                 |  ✅  | Claude Haiku 5.5；使用者也能輸入自己的金鑰                                      |
 | 6\. 測試資料與單元測試                                                      |  ✅  | 前端 296 個、後端 386 個單元測試，另有 29 個瀏覽器自動測試；範例資料在 `data/`  |
-| PRD（開發前必做）                                                           |  ✅  | `threadsinsight_prd-1.md`，開發中改需求時都有同步更新                           |
+| PRD（開發前必做）                                                           |  ✅  | `docs/prd.md`，開發中改需求時都有同步更新                                       |
 | 交付內容：README、AI_LOG、package.json、src/、data/、reports/、.env.example |  ✅  | 都在 repo 裡；`data/`、`reports/` 可用 `vp run samples` 重新產生                |
-| 交付內容：資料表 schema、部署設定說明                                       |  ⚠️  | `db/migrations/`；Railway 部署說明在 `docs/architecture.md`                     |
+| 交付內容：資料表 schema 說明                                                |  ✅  | `docs/schema.md`（白話說明每張表與權限）；建立資料表的 SQL 在 `db/migrations/`  |
+| 交付內容：Vercel 部署設定說明                                               |  ⚠️  | 改部署在 Railway，部署說明在 `docs/architecture.md`                             |
 | README：安裝、執行、資料來源是否合法、指標定義、已知限制                    |  ✅  | README 各段落                                                                   |
 | 加分：分頁／批次、retry、log、說明爬取限制與合法性                          |  ✅  | 篇數可選 1～50；每個請求都有日誌；README 說明爬取限制                           |
 | 加分：自訂互動率、時間／主題差異、異常值與限制                              |  ✅  | 加權互動分（讚＋2×回覆）；時段熱力圖與主題分析；README 說明限制                 |

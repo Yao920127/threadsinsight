@@ -13,6 +13,14 @@
 | ThreadsInsight      | https://web-production-b6984bbe.up.railway.app       | 用 Email 與密碼註冊即可使用（不需驗證信箱）      |
 | 架構圖（Floorplan） | https://floorplan-production-3c17c79e.up.railway.app | 互動式系統架構圖：各部分、檔案說明與三條導覽流程 |
 
+**公開測試帳號**（供大家試用，請勿更改密碼或刪除帳號）：
+
+| Email              | 密碼             |
+| :----------------- | :--------------- |
+| `demo@example.com` | `demo-test-2026` |
+
+此帳號為共用，任何人都看得到其中的分析任務，請不要輸入個人資料或自己的 Anthropic 金鑰。
+
 兩個網站都部署在 Railway，並與本 repo 的 `main` 分支同步：推上 GitHub 後，Railway 只重新部署有變動的服務（依各服務的監看路徑），資料庫遷移也會自動套用。部署細節見 [docs/architecture.md](docs/architecture.md)。
 
 ## 功能

@@ -62,6 +62,14 @@ passwordForm.addEventListener("submit", (event) => {
     .finally(() => setBusy(false));
 });
 
+const DEMO_CREDENTIALS = { email: "demo@example.com", password: "demo-test-2026" } as const;
+
+requireElement("#fill-demo", HTMLButtonElement).addEventListener("click", () => {
+  emailInput.value = DEMO_CREDENTIALS.email;
+  passwordInput.value = DEMO_CREDENTIALS.password;
+  passwordInput.focus();
+});
+
 initFormValidation(passwordForm, announcer);
 
 /** 已登入的人打開登入頁，直接回到原本要去的頁面。 */
